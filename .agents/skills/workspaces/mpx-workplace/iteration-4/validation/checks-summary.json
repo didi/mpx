@@ -1,0 +1,231 @@
+{
+  "completed": 16,
+  "eslint_errors": 39,
+  "eslint_warnings": 11,
+  "targets_with_errors": 38,
+  "runs": [
+    {
+      "eval_id": 0,
+      "group": "mpx",
+      "eslint": {
+        "errorCount": 0,
+        "warningCount": 0,
+        "files": 7,
+        "exit": 0
+      },
+      "failing_targets": []
+    },
+    {
+      "eval_id": 0,
+      "group": "noskill",
+      "eslint": {
+        "errorCount": 0,
+        "warningCount": 0,
+        "files": 9,
+        "exit": 0
+      },
+      "failing_targets": [
+        "ios 1e/0w",
+        "android 1e/0w",
+        "harmony 1e/0w"
+      ]
+    },
+    {
+      "eval_id": 1,
+      "group": "mpx",
+      "eslint": {
+        "errorCount": 0,
+        "warningCount": 3,
+        "files": 2,
+        "exit": 0
+      },
+      "failing_targets": []
+    },
+    {
+      "eval_id": 1,
+      "group": "noskill",
+      "eslint": {
+        "errorCount": 0,
+        "warningCount": 0,
+        "files": 2,
+        "exit": 0
+      },
+      "failing_targets": [
+        "ios 3e/0w",
+        "android 3e/0w",
+        "harmony 3e/0w"
+      ]
+    },
+    {
+      "eval_id": 2,
+      "group": "mpx",
+      "eslint": {
+        "errorCount": 0,
+        "warningCount": 0,
+        "files": 2,
+        "exit": 0
+      },
+      "failing_targets": [
+        "ali 0e/4w",
+        "web 0e/2w"
+      ]
+    },
+    {
+      "eval_id": 2,
+      "group": "noskill",
+      "eslint": {
+        "errorCount": 0,
+        "warningCount": 0,
+        "files": 2,
+        "exit": 0
+      },
+      "failing_targets": [
+        "wx 1e/0w",
+        "ali 1e/0w",
+        "ios 1e/0w",
+        "android 1e/0w",
+        "harmony 1e/0w",
+        "web 1e/0w"
+      ]
+    },
+    {
+      "eval_id": 3,
+      "group": "mpx",
+      "eslint": {
+        "errorCount": 0,
+        "warningCount": 0,
+        "files": 2,
+        "exit": 0
+      },
+      "failing_targets": []
+    },
+    {
+      "eval_id": 3,
+      "group": "noskill",
+      "eslint": {
+        "errorCount": 0,
+        "warningCount": 0,
+        "files": 2,
+        "exit": 0
+      },
+      "failing_targets": [
+        "ali 0e/4w",
+        "ios 0e/4w",
+        "android 0e/4w",
+        "harmony 0e/4w",
+        "web 0e/7w"
+      ]
+    },
+    {
+      "eval_id": 4,
+      "group": "mpx",
+      "eslint": {
+        "errorCount": 0,
+        "warningCount": 1,
+        "files": 4,
+        "exit": 0
+      },
+      "failing_targets": []
+    },
+    {
+      "eval_id": 4,
+      "group": "noskill",
+      "eslint": {
+        "errorCount": 0,
+        "warningCount": 0,
+        "files": 4,
+        "exit": 0
+      },
+      "failing_targets": [
+        "ios 6e/2w",
+        "android 6e/2w",
+        "harmony 6e/2w",
+        "web 0e/2w"
+      ]
+    },
+    {
+      "eval_id": 5,
+      "group": "mpx",
+      "eslint": {
+        "errorCount": 0,
+        "warningCount": 7,
+        "files": 4,
+        "exit": 0
+      },
+      "failing_targets": []
+    },
+    {
+      "eval_id": 5,
+      "group": "noskill",
+      "eslint": {
+        "errorCount": 39,
+        "warningCount": 0,
+        "files": 4,
+        "exit": 1
+      },
+      "failing_targets": []
+    },
+    {
+      "eval_id": 6,
+      "group": "mpx",
+      "eslint": {
+        "errorCount": 0,
+        "warningCount": 0,
+        "files": 5,
+        "exit": 0
+      },
+      "failing_targets": [
+        "wx 1e/0w",
+        "ali 1e/0w",
+        "ios 1e/0w",
+        "android 1e/0w",
+        "harmony 1e/0w",
+        "web 1e/0w"
+      ]
+    },
+    {
+      "eval_id": 6,
+      "group": "noskill",
+      "eslint": {
+        "errorCount": 0,
+        "warningCount": 0,
+        "files": 5,
+        "exit": 0
+      },
+      "failing_targets": [
+        "wx 1e/0w",
+        "ali 1e/0w",
+        "ios 1e/0w",
+        "android 1e/0w",
+        "harmony 1e/0w",
+        "web 1e/0w"
+      ]
+    },
+    {
+      "eval_id": 7,
+      "group": "mpx",
+      "eslint": {
+        "errorCount": 0,
+        "warningCount": 0,
+        "files": 7,
+        "exit": 0
+      },
+      "failing_targets": [
+        "ios 1e/0w",
+        "android 1e/0w",
+        "harmony 1e/0w"
+      ]
+    },
+    {
+      "eval_id": 7,
+      "group": "noskill",
+      "eslint": {
+        "errorCount": 0,
+        "warningCount": 0,
+        "files": 7,
+        "exit": 0
+      },
+      "failing_targets": []
+    }
+  ]
+}

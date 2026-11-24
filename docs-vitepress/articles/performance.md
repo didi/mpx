@@ -2,7 +2,7 @@
 sidebarDepth: 2
 ---
 
-# 小程序框架运行时性能大测评
+# 小程序框架运行时性能大测评 {#runtime-performance-benchmark}
 
 > 作者：董宏平([hiyuki](https://github.com/hiyuki))，滴滴出行小程序负责人，mpx框架负责人及核心作者
 
@@ -29,11 +29,11 @@ sidebarDepth: 2
 
 框架性能测试demo全部存放于https://github.com/hiyuki/mp-framework-benchmark 中，欢迎广大开发者进行验证纠错及补全；
 
-## 测试方案
+## 测试方案 {#test-plan}
 
 为了使测试结果真实有效，我基于常见的业务场景构建了两种测试场景，分别是动态测试场景和静态测试场景。
 
-### 动态测试场景
+### 动态测试场景 {#dynamic-test-scenario}
 
 动态测试中，视图基于数据动态渲染，静态节点较少，视图更新耗时和setData调用情况是该测试场景中的主要测试点。
 
@@ -45,7 +45,7 @@ sidebarDepth: 2
 
 在动态测试中，我在外部通过函数代理的方式在初始化之前将App、Page和Component构造器进行代理，通过mixin的方式在Page的onLoad和Component的created钩子中注入setData拦截逻辑，对所有页面和组件的setData调用进行监听，并统计小程序的视图更新耗时及setData调用情况。该测试方式能够做到对框架代码的零侵入，能够跟踪到小程序全量的setData行为并进行独立的耗时计算，具有很强的普适性，代码具体实现可以查看https://github.com/hiyuki/mp-framework-benchmark/blob/master/utils/proxy.js
 
-### 静态测试场景
+### 静态测试场景 {#static-test-scenario}
 
 静态测试模拟业务中静态页面的场景，如运营活动和文章等页面，页面内具备大量的静态节点，而没有数据动态渲染，初始ready耗时是该场景下测试的重心。
 
@@ -55,7 +55,7 @@ sidebarDepth: 2
 
 *静态测试demo*
 
-## 测试流程及数据
+## 测试流程及数据 {#test-process-and-data}
 
 > 以下所有耗时类的测试数据均为微信小程序中真机进行5次测试计算平均值得出，单位均为ms。Ios测试环境为手机型号iPhone 11，系统版本13.3.1，微信版本7.0.12，安卓测试环境为手机型号小米9，系统版本Android10，微信版本7.0.12。
 
@@ -63,7 +63,7 @@ sidebarDepth: 2
 
 > 由于transform-runtime引入的core-js会对框架的运行时体积和运行耗时带来一定影响，且不是所有的框架都会在编译时开启transform-runtime，为了对齐测试环境，下述测试均在transform-runtime关闭时进行。
 
-### 框架运行时体积
+### 框架运行时体积 {#framework-runtime-size}
 
 由于不是所有框架都能够使用`webpack-bundle-analyzer`得到精确的包体积占用，这里我通过将各框架生成的demo项目体积减去native编写的demo项目体积作为框架的运行时体积。
 
@@ -85,7 +85,7 @@ native > wepy2 > mpx > mpvue > uniapp > chameleon > taro next > kbone
 * wepy2和mpx在框架运行时体积上控制得最好；
 * taro next和kbone由于动态渲染的特性，在dist中会生成递归渲染模板/组件，所以占用体积较大。
 
-### 页面渲染耗时(动态测试)
+### 页面渲染耗时(动态测试) {#page-render-time-dynamic}
 
 我们使用`刷新页面`操作触发页面重新加载，对于大部分框架来说，页面渲染耗时是从触发刷新操作到页面执行onReady的耗时，但是对于像kbone和taro next这样的动态渲染框架，页面执行onReady并不代表视图真正渲染完成，为此，我们设定了一个特殊规则，在页面onReady触发的1000ms内，在没有任何操作的情况下出现setData回调时，以最后触发的setData回调作为页面渲染完成时机来计算真实的页面渲染耗时，测试结果如下：
 
@@ -108,7 +108,7 @@ mpx ≈ chameleon ≈ uniapp ≈ native ≈ wepy2 > taro next ≈ kbone ≈ mpvu
 结论分析：
 * 由于mpvue全量在页面进行渲染，kbone和taro next采用了动态渲染技术，页面渲染耗时较长，其余框架并无太大区别。
 
-### 页面更新耗时(无后台数据)
+### 页面更新耗时(无后台数据) {#page-update-time-no-data}
 
 这里后台数据的定义为data中存在但当前页面渲染中未使用到的数据，在这个demo场景下即为不可用券的数据，当前会在不可用券为0的情况下，对可用券列表进行各种操作，并统计更新耗时。
 
@@ -155,7 +155,7 @@ native > mpx ≈ uniapp > chameleon > mpvue > wepy2 > taro next > kbone
 * wepy2会在数据变更时对props数据也进行setData，在该场景下造成了大量的无效性能损耗，导致性能表现不佳；
 * kbone和taro next采用了动态渲染方案，每次新增更新时会发送大量描述dom结构的数据，与此同时动态递归渲染的耗时也远大于常规的静态模板渲染，使得这两个框架在所有的更新场景下耗时都远大于其他框架。
 
-### 页面更新耗时(有后台数据)
+### 页面更新耗时(有后台数据) {#page-update-time-with-data}
 
 刷新页面后我们使用`新增不可用券(1000)`创建后台数据，观察该操作是否会触发setData并统计耗时
 
@@ -206,7 +206,7 @@ native > mpx > uniapp > chameleon > mpvue > wepy2 > taro next > kbone
 * wepy2当中的diff精度不足，耗时也没有产生明显变化；
 * 其余框架由于每次更新都会对后台数据进行deep diff，耗时都产生了一定提升。
 
-### 页面更新耗时(大数据量场景)
+### 页面更新耗时(大数据量场景) {#page-update-time-large-data}
 
 > 由于mpvue和taro next的渲染全部在页面中进行，而kbone的渲染方案会额外新增大量的自定义组件，这三个框架都会在优惠券数量达到2000时崩溃白屏，我们排除了这三个框架对其余框架进行大数据量场景下的页面更新耗时测试
 
@@ -244,7 +244,7 @@ native > mpx > uniapp > chameleon > wepy2
 结论分析：
 * 在大数据量场景下，框架之间基础性能的差异会变得更加明显，mpx和uniapp依然保持了接近原生的良好性能表现，而chameleon和wepy2则产生了比较显著的性能劣化。
 
-### 局部更新耗时
+### 局部更新耗时 {#partial-update-time}
 
 我们在可用券数量为1000的情况下，点击任意一张可用券触发选中状态，以测试局部更新性能
 
@@ -267,7 +267,7 @@ native ≈ chameleon ≈ mpx ≈ wepy2 ≈ uniapp > mpvue > taro next > kbone
 * mpvue由于使用了页面更新，局部更新耗时显著增加；
 * kbone和taro next由于递归动态渲染的性能开销巨大，导致局部更新耗时同样巨大。
 
-### setData调用
+### setData调用 {#setdata-call}
 
 我们将`proxySetData`的count和size选项设置为true，开启setData的次数和体积统计，重新构建后按照以下流程执行系列操作，并统计setData的调用次数和发送数据的体积。
 
@@ -307,7 +307,7 @@ mpx > uniapp > native > chameleon > wepy2 > taro next > mpvue > kbone
 
 
 
-### 页面渲染耗时(静态测试)
+### 页面渲染耗时(静态测试) {#page-render-time-static}
 
 此处的页面渲染耗时与前面描述的动态测试场景中相同，测试结果如下：
 
@@ -328,12 +328,12 @@ chameleon ≈ mpx ≈ uniapp ≈ native > wepy2 > mpvue ≈ taro next > kbone
 结论分析：
 * 除了kbone和taro next采用动态渲染耗时增加，mpvue使用页面模板渲染性能稍差，其余框架的静态页面渲染表现都和原生差不多。
 
-## 结论
+## 结论 {#conclusion}
 
 综合上述测试数据，我们得到最终的小程序框架运行时性能排名为：  
 mpx > uniapp > chameleon > wepy2 > mpvue > taro next > kbone
 
-## 一点私货
+## 一点私货 {#personal-opinion}
 
 虽然kbone和taro next采用了动态渲染技术在性能表现上并不尽如人意，但是我依然认为这是很棒的技术方案。虽然本文从头到位都在进行性能测试和对比，但性能并不是框架的全部，开发效率和高可用性仍然是框架的重心，开发效率相信是所有框架设计的初衷，但是高可用性却在很大程度被忽视。从这个角度来说，kbone和taro next是非常成功的，不同于过去的转译思路，这种从抹平底层渲染环境的做法能够使上层web框架完整运行，在框架可用性上带来非常大的提升，非常适合于运营类简单小程序的迁移和开发。
 

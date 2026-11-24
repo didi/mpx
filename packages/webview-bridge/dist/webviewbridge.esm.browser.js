@@ -1,6 +1,6 @@
 /**
- * mpxjs webview bridge v2.10.3
- * (c) 2025 @mpxjs team
+ * mpxjs webview bridge v2.11.1
+ * (c) 2026 @mpxjs team
  * @license Apache
  */
 function loadScript (url, { time = 5000, crossOrigin = false } = {}) {
@@ -44,6 +44,7 @@ function loadScript (url, { time = 5000, crossOrigin = false } = {}) {
 }
 
 let sdkReady;
+const loadErrorCallbacks = [];
 const SDK_URL_MAP = Object.assign({
   wx: {
     url: 'https://res.wx.qq.com/open/js/jweixin-1.3.2.js'
@@ -102,7 +103,7 @@ const eventListener = (event) => {
 
 // 环境判断逻辑
 const systemUA = navigator.userAgent;
-if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -1) {
+if ((systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -1) || systemUA.indexOf("Touch 'n Go") > -1) {
   env = 'my';
 } else if (systemUA.toLowerCase().indexOf('miniprogram') > -1) {
   env = systemUA.indexOf('QQ') > -1 ? 'qq' : 'wx';
@@ -120,6 +121,13 @@ if (systemUA.indexOf('AlipayClient') > -1 && systemUA.indexOf('MiniProgram') > -
 
 const initWebviewBridge = () => {
   sdkReady = (env !== 'web' && env !== 'rn') ? SDK_URL_MAP[env].url ? loadScript(SDK_URL_MAP[env].url) : Promise.reject(new Error('未找到对应的sdk')) : Promise.resolve();
+  sdkReady.catch((err = {}) => {
+    loadErrorCallbacks.forEach((callback) => {
+      if (typeof callback === 'function') {
+        callback(err.message || err);
+      }
+    });
+  });
   getWebviewApi();
 };
 
@@ -146,6 +154,17 @@ const webviewBridge = {
         window.wx.config(config);
       }
     });
+  },
+  onLoadScriptError (callback) {
+    if (loadErrorCallbacks.indexOf(callback) === -1) {
+      loadErrorCallbacks.push(callback);
+    }
+  },
+  offLoadScriptError (callback) {
+    const index = loadErrorCallbacks.indexOf(callback);
+    if (index > -1) {
+      loadErrorCallbacks.splice(index, 1);
+    }
   }
 };
 

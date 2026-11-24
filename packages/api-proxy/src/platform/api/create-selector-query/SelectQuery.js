@@ -28,7 +28,9 @@ class SelectQuery {
   }
 
   selectViewport () {
-    return new NodesRef('html', this, true)
+    const nodesRef = new NodesRef('html', this, true)
+    nodesRef._component = null
+    return nodesRef
   }
 
   exec (callback) {
@@ -51,12 +53,11 @@ class SelectQuery {
           res.push(selector.map(el => handleFields(fields, el, null)))
         }
       } else {
-        const selectSelf =
-          curComponent === document
-            ? false
-            : Array
-              .from(curComponent.parentNode.querySelectorAll(selector))
-              .every(item => item === curComponent)
+        let selectSelf = false
+        if (curComponent !== document) {
+          const els = curComponent.parentNode.querySelectorAll(selector)
+          selectSelf = els.length === 1 && els[0] === curComponent
+        }
         if (single) {
           const el = selectSelf ? curComponent : curComponent.querySelector(selector)
           res.push(handleFields(fields, el, selector))

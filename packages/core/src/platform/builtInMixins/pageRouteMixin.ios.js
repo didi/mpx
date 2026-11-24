@@ -6,14 +6,14 @@ export default function pageRouteMixin (mixinType) {
       [BEFORECREATE] () {
         const mpxEventChannel = global.__mpxEventChannel || {}
         if (mpxEventChannel.route === this.route) {
-          this._eventChannel = mpxEventChannel.eventChannel
+          this.__eventChannel = mpxEventChannel.eventChannel
         } else {
-          this._eventChannel = new EventChannel()
+          this.__eventChannel = new EventChannel()
         }
       },
       methods: {
         getOpenerEventChannel () {
-          return this._eventChannel
+          return this.__eventChannel
         }
       }
     }

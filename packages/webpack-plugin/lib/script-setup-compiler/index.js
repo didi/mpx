@@ -3,7 +3,7 @@ const MagicString = require('magic-string')
 const { SourceMapConsumer, SourceMapGenerator } = require('source-map')
 const traverse = require('@babel/traverse').default
 const t = require('@babel/types')
-const formatCodeFrame = require('@babel/code-frame')
+const { default: formatCodeFrame } = require('@babel/code-frame')
 const parseRequest = require('../utils/parse-request')
 
 // Special compiler macros
@@ -98,7 +98,7 @@ function compileScriptSetup (
   ) {
     if (node) {
       throw new Error(
-        `[@mpxjs/webpack-plugin script-setup-compiler] ${msg}\n\n${filePath}\n${formatCodeFrame(
+        `[Mpx script error]: ${msg}\n\n${filePath}\n${formatCodeFrame(
           content,
           node.start + startOffset,
           end
@@ -106,7 +106,7 @@ function compileScriptSetup (
       )
     } else {
       throw new Error(
-        `[@mpxjs/webpack-plugin script-setup-compiler] ${msg}\n\n${filePath}\n`
+        `[Mpx script error]: ${msg}\n\n${filePath}\n`
       )
     }
   }
@@ -605,8 +605,7 @@ function compileScriptSetup (
       if (node.key.name === 'properties' && hasDefinePropsCall) {
         console.warn(`${DEFINE_PROPS} has been called, ${DEFINE_OPTIONS} set properties will be ignored`)
       } else {
-        const declCode = content.slice(node.value.start, node.value.end).trim()
-        runtimeOptions += `\n ${node.key.name}: ${declCode},`
+        runtimeOptions += `\n ${content.slice(node.start, node.end).trim()},`
       }
     }
   }

@@ -1,0 +1,19 @@
+## mpx.clearStorageSync()
+
+清理本地数据缓存，mpx.clearStorage 的同步版本。
+
+支持情况： 微信、支付宝、web
+
+> RN 的存储实现基于异步的 AsyncStorage，不支持此同步 API，请使用 `mpx.clearStorage`。
+
+[参考文档](https://developers.weixin.qq.com/miniprogram/dev/api/storage/wx.clearStorageSync.html)
+
+
+### 示例代码 {#example-code}
+```js
+try {
+  mpx.clearStorageSync()
+} catch(e) {
+  // Do something when catch error
+}
+```

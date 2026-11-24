@@ -1,4 +1,7 @@
 const TAG_NAME = 'scroll-view'
+const { MPX_SCROLLBAR_HIDDEN } = require('../../../../utils/const')
+const { evalExp, parseMustacheWithContext } = require('../../../../template-compiler/compiler')
+const hasOwn = require('../../../../utils/has-own')
 
 module.exports = function ({ print }) {
   const baiduPropLog = print({ platform: 'baidu', tag: TAG_NAME, isError: false })
@@ -18,6 +21,8 @@ module.exports = function ({ print }) {
   const harmonyPropLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false })
   const iosEventLog = print({ platform: 'ios', tag: TAG_NAME, isError: false, type: 'event' })
   const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
+  const ksPropLog = print({ platform: 'ks', tag: TAG_NAME, isError: false })
+  const ksEventLog = print({ platform: 'ks', tag: TAG_NAME, isError: false, type: 'event' })
 
   return {
     test: TAG_NAME,
@@ -39,7 +44,37 @@ module.exports = function ({ print }) {
     },
     props: [
       {
-        test: /^(enable-flex|scroll-anchoring|refresher-enabled|refresher-threshold|refresher-default-style|refresher-background|refresher-triggered|enhanced|bounces|show-scrollbar|paging-enabled|fast-deceleration)$/,
+        test: 'class',
+        ali (attr, { el }) {
+          // 原有 class 由 show-scrollbar 规则统一合并。
+          if (hasOwn(el.attrsMap, 'show-scrollbar')) return false
+        }
+      },
+      {
+        test: 'show-scrollbar',
+        ali ({ value }, { el }) {
+          const className = el.attrsMap.class
+          const parsed = parseMustacheWithContext(value)
+          const evaluated = evalExp(parsed.result)
+          if (evaluated.success && evaluated.result !== false) {
+            return className ? [{ name: 'class', value: className }] : []
+          }
+
+          const hiddenClass = evaluated.success
+            ? MPX_SCROLLBAR_HIDDEN
+            : `{{${parsed.result} === false ? '${MPX_SCROLLBAR_HIDDEN}' : ''}}`
+          return [{
+            name: 'class',
+            value: className ? `${className} ${hiddenClass}` : hiddenClass
+          }]
+        },
+        tt: ttPropLog,
+        qq: qqPropLog,
+        swan: baiduPropLog,
+        qa: qaPropLog
+      },
+      {
+        test: /^(enable-flex|scroll-anchoring|refresher-enabled|refresher-threshold|refresher-default-style|refresher-background|refresher-triggered|enhanced|bounces|paging-enabled|fast-deceleration)$/,
         ali: aliPropLog,
         tt: ttPropLog,
         qq: qqPropLog,
@@ -55,7 +90,7 @@ module.exports = function ({ print }) {
         jd: jdPropLog
       },
       {
-        test: /^(enable-back-to-top|enable-flex|scroll-anchoring|enhanced|bounces|show-scrollbar|paging-enabled|fast-deceleration|binddragstart|binddragging|binddragend)$/,
+        test: /^(enable-back-to-top|enable-flex|scroll-anchoring|enhanced|bounces|paging-enabled|fast-deceleration|binddragstart|binddragging|binddragend)$/,
         qa: qaPropLog
       },
       {
@@ -67,6 +102,10 @@ module.exports = function ({ print }) {
       {
         test: /^(refresher-default-style|refresher-background)$/,
         ios: iosPropLog
+      },
+      {
+        test: /^(scroll-into-view-offset|enable-back-to-top|enable-passive|refresher-enabled|refresher-threshold|refresher-default-style|refresher-background|refresher-triggered|bounces|fast-deceleration|enable-flex|enhanced|paging-enabled|using-sticky|type|associative-container|reverse|clip|enable-back-to-top|cache-extent|min-drag-distance|scroll-into-view-within-extent|scroll-into-view-alignment|padding|refresher-two-level-enabled|refresher-two-level-triggered|refresher-two-level-threshold|refresher-two-level-close-threshold|refresher-two-level-close-threshold|refresher-two-level-scroll-enabled|refresher-ballistic-refresh-enabled|refresher-two-level-pinned|scroll-anchoring)$/,
+        ks: ksPropLog
       }
     ],
     event: [
@@ -90,13 +129,18 @@ module.exports = function ({ print }) {
         ali: aliEventLog,
         tt: ttEventLog,
         qq: qqEventLog,
-        swan: baiduEventLog
+        swan: baiduEventLog,
+        ks: ksEventLog
       },
       {
         test: /^(refresherpulling|refresherrestore|refresherabort)$/,
         android: androidEventLog,
         ios: iosEventLog,
         harmony: harmonyEventLog
+      },
+       {
+        test: /^(scrollstart|scrollend|refresherwillrefresh|refresherstatuschange)$/,
+        ks: ksEventLog
       }
     ]
   }

@@ -1,0 +1,11 @@
+{
+  "description": "相同任务、目标、模型与工作目录，仅 Skill 入口不同；不注入评分答案。",
+  "templates": {
+    "mpx": {
+      "prompt": "你是 Mpx 跨端开发者。完成任务：\n{{TASK_PROMPT}}\n\n目标：wx、ali；源码方言 wx。记录实际安装版本、解析路径与编译产物。固定工作目录：{{WORKDIR}}。\n输入目录：{{INPUT_PATH}}。先读取目录内任务输入与依赖。\nSkill：首先完整读取 {{MPX_SKILL_PATH}}，按需查阅该 Skill 的 references。\n评测隔离：只能使用本组指定的 Skill，不加载其他 Skill，不读取 evals.json、eval_metadata.json、评分脚本、assessment、其他组输出或历史运行。两组是提示词隔离，不是文件系统权限隔离。\n输出目录：{{OUTPUT_PATH}}。必须交付：\n{{OUTPUT_FILES}}\n仅修改本组输出和为验证产生的临时产物；复用已复制的依赖，不修改输入、Skill、运行器或其他组文件。validation.md 如实记录改动、实际命令与日志、依赖版本、未验证项；未运行的检查不能写为通过。\n框架依赖使用workspaces 顶层从 npm 官方源统一安装的 @mpxjs/* latest 发布版本；评测准备阶段在 workspaces 顶层运行 npm run update-framework && npm run check-env；模型执行期间使用现有版本。编译时以当前工作区作为 --project-root（npm run compile-validate 已配置），保持各测试集独立构建配置。两组共用同一锁文件，执行期间不更新依赖，不引用仓库 packages/ 或复制、修改框架源码。实际能力以发布包为准，未支持项如实记录。"
+    },
+    "mpx2ali": {
+      "prompt": "你是 Mpx 跨端开发者。完成任务：\n{{TASK_PROMPT}}\n\n目标：wx、ali；源码方言 wx。记录实际安装版本、解析路径与编译产物。固定工作目录：{{WORKDIR}}。\n输入目录：{{INPUT_PATH}}。先读取目录内任务输入与依赖。\nSkill：首先完整读取 {{MPX2ALI_SKILL_PATH}}，按需查阅该 Skill 的 references。\n评测隔离：只能使用本组指定的 Skill，不加载其他 Skill，不读取 evals.json、eval_metadata.json、评分脚本、assessment、其他组输出或历史运行。两组是提示词隔离，不是文件系统权限隔离。\n输出目录：{{OUTPUT_PATH}}。必须交付：\n{{OUTPUT_FILES}}\n仅修改本组输出和为验证产生的临时产物；复用已复制的依赖，不修改输入、Skill、运行器或其他组文件。validation.md 如实记录改动、实际命令与日志、依赖版本、未验证项；未运行的检查不能写为通过。\n框架依赖使用workspaces 顶层从 npm 官方源统一安装的 @mpxjs/* latest 发布版本；评测准备阶段在 workspaces 顶层运行 npm run update-framework && npm run check-env；模型执行期间使用现有版本。编译时以当前工作区作为 --project-root（npm run compile-validate 已配置），保持各测试集独立构建配置。两组共用同一锁文件，执行期间不更新依赖，不引用仓库 packages/ 或复制、修改框架源码。实际能力以发布包为准，未支持项如实记录。"
+    }
+  }
+}

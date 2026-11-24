@@ -1,0 +1,723 @@
+[
+  {
+    "eval_id": 0,
+    "group": "mpx",
+    "eslint": {
+      "returncode": 0,
+      "files": 7,
+      "errors": 0,
+      "warnings": 0
+    },
+    "compile": {
+      "returncode": 1,
+      "timeout": false,
+      "scope": "single entry; default partial compilation; not full app/host execution"
+    },
+    "targets": {
+      "wx": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "ali": {
+        "success": false,
+        "errors": 0,
+        "warnings": 1
+      },
+      "ios": {
+        "success": false,
+        "errors": 1,
+        "warnings": 0
+      },
+      "android": {
+        "success": false,
+        "errors": 1,
+        "warnings": 0
+      },
+      "harmony": {
+        "success": false,
+        "errors": 1,
+        "warnings": 0
+      },
+      "web": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      }
+    }
+  },
+  {
+    "eval_id": 0,
+    "group": "noskill",
+    "eslint": {
+      "returncode": 0,
+      "files": 9,
+      "errors": 0,
+      "warnings": 0
+    },
+    "compile": {
+      "returncode": 1,
+      "timeout": false,
+      "scope": "single entry; default partial compilation; not full app/host execution"
+    },
+    "targets": {
+      "wx": {
+        "success": false,
+        "errors": 1,
+        "warnings": 0
+      },
+      "ali": {
+        "success": false,
+        "errors": 1,
+        "warnings": 0
+      },
+      "ios": {
+        "success": false,
+        "errors": 1,
+        "warnings": 0
+      },
+      "android": {
+        "success": false,
+        "errors": 1,
+        "warnings": 0
+      },
+      "harmony": {
+        "success": false,
+        "errors": 1,
+        "warnings": 0
+      },
+      "web": {
+        "success": false,
+        "errors": 1,
+        "warnings": 0
+      }
+    }
+  },
+  {
+    "eval_id": 1,
+    "group": "mpx",
+    "eslint": {
+      "returncode": 0,
+      "files": 7,
+      "errors": 0,
+      "warnings": 0
+    },
+    "compile": {
+      "returncode": 0,
+      "timeout": false,
+      "scope": "single entry; default partial compilation; not full app/host execution"
+    },
+    "targets": {
+      "wx": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "ali": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "ios": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "android": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "harmony": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "web": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      }
+    }
+  },
+  {
+    "eval_id": 1,
+    "group": "noskill",
+    "eslint": {
+      "returncode": 0,
+      "files": 4,
+      "errors": 0,
+      "warnings": 0
+    },
+    "compile": {
+      "returncode": 1,
+      "timeout": false,
+      "scope": "single entry; default partial compilation; not full app/host execution"
+    },
+    "targets": {
+      "wx": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "ali": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "ios": {
+        "success": false,
+        "errors": 2,
+        "warnings": 0
+      },
+      "android": {
+        "success": false,
+        "errors": 2,
+        "warnings": 0
+      },
+      "harmony": {
+        "success": false,
+        "errors": 2,
+        "warnings": 0
+      },
+      "web": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      }
+    }
+  },
+  {
+    "eval_id": 2,
+    "group": "mpx",
+    "eslint": {
+      "returncode": 0,
+      "files": 3,
+      "errors": 0,
+      "warnings": 0
+    },
+    "compile": {
+      "returncode": 1,
+      "timeout": false,
+      "scope": "single entry; default partial compilation; not full app/host execution"
+    },
+    "targets": {
+      "wx": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "ali": {
+        "success": false,
+        "errors": 0,
+        "warnings": 8
+      },
+      "ios": {
+        "success": false,
+        "errors": 3,
+        "warnings": 0
+      },
+      "android": {
+        "success": false,
+        "errors": 3,
+        "warnings": 0
+      },
+      "harmony": {
+        "success": false,
+        "errors": 3,
+        "warnings": 0
+      },
+      "web": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      }
+    }
+  },
+  {
+    "eval_id": 2,
+    "group": "noskill",
+    "eslint": {
+      "returncode": 0,
+      "files": 2,
+      "errors": 0,
+      "warnings": 0
+    },
+    "compile": {
+      "returncode": 1,
+      "timeout": false,
+      "scope": "single entry; default partial compilation; not full app/host execution"
+    },
+    "targets": {
+      "wx": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "ali": {
+        "success": false,
+        "errors": 0,
+        "warnings": 3
+      },
+      "ios": {
+        "success": false,
+        "errors": 2,
+        "warnings": 3
+      },
+      "android": {
+        "success": false,
+        "errors": 2,
+        "warnings": 3
+      },
+      "harmony": {
+        "success": false,
+        "errors": 2,
+        "warnings": 3
+      },
+      "web": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      }
+    }
+  },
+  {
+    "eval_id": 3,
+    "group": "mpx",
+    "eslint": {
+      "returncode": 0,
+      "files": 2,
+      "errors": 0,
+      "warnings": 4
+    },
+    "compile": {
+      "returncode": 1,
+      "timeout": false,
+      "scope": "single entry; default partial compilation; not full app/host execution"
+    },
+    "targets": {
+      "wx": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "ali": {
+        "success": false,
+        "errors": 0,
+        "warnings": 3
+      },
+      "ios": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "android": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "harmony": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "web": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      }
+    }
+  },
+  {
+    "eval_id": 3,
+    "group": "noskill",
+    "eslint": {
+      "returncode": 0,
+      "files": 3,
+      "errors": 0,
+      "warnings": 0
+    },
+    "compile": {
+      "returncode": 0,
+      "timeout": false,
+      "scope": "single entry; default partial compilation; not full app/host execution"
+    },
+    "targets": {
+      "wx": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "ali": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "ios": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "android": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "harmony": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "web": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      }
+    }
+  },
+  {
+    "eval_id": 4,
+    "group": "mpx",
+    "eslint": {
+      "returncode": 0,
+      "files": 8,
+      "errors": 0,
+      "warnings": 9
+    },
+    "compile": {
+      "returncode": 1,
+      "timeout": false,
+      "scope": "single entry; default partial compilation; not full app/host execution"
+    },
+    "targets": {
+      "wx": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "ali": {
+        "success": false,
+        "errors": 0,
+        "warnings": 1
+      },
+      "ios": {
+        "success": false,
+        "errors": 4,
+        "warnings": 0
+      },
+      "android": {
+        "success": false,
+        "errors": 4,
+        "warnings": 0
+      },
+      "harmony": {
+        "success": false,
+        "errors": 4,
+        "warnings": 0
+      },
+      "web": {
+        "success": false,
+        "errors": 0,
+        "warnings": 2
+      }
+    }
+  },
+  {
+    "eval_id": 4,
+    "group": "noskill",
+    "eslint": {
+      "returncode": 0,
+      "files": 10,
+      "errors": 0,
+      "warnings": 0
+    },
+    "compile": {
+      "returncode": 1,
+      "timeout": false,
+      "scope": "single entry; default partial compilation; not full app/host execution"
+    },
+    "targets": {
+      "wx": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "ali": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "ios": {
+        "success": false,
+        "errors": 2,
+        "warnings": 0
+      },
+      "android": {
+        "success": false,
+        "errors": 2,
+        "warnings": 0
+      },
+      "harmony": {
+        "success": false,
+        "errors": 2,
+        "warnings": 0
+      },
+      "web": {
+        "success": false,
+        "errors": 0,
+        "warnings": 1
+      }
+    }
+  },
+  {
+    "eval_id": 5,
+    "group": "mpx",
+    "eslint": {
+      "returncode": 0,
+      "files": 8,
+      "errors": 0,
+      "warnings": 7
+    },
+    "compile": {
+      "returncode": 1,
+      "timeout": false,
+      "scope": "single entry; default partial compilation; not full app/host execution"
+    },
+    "targets": {
+      "wx": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "ali": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "ios": {
+        "success": false,
+        "errors": 2,
+        "warnings": 0
+      },
+      "android": {
+        "success": false,
+        "errors": 2,
+        "warnings": 0
+      },
+      "harmony": {
+        "success": false,
+        "errors": 2,
+        "warnings": 0
+      },
+      "web": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      }
+    }
+  },
+  {
+    "eval_id": 5,
+    "group": "noskill",
+    "eslint": {
+      "returncode": 1,
+      "files": 7,
+      "errors": 61,
+      "warnings": 0
+    },
+    "compile": {
+      "returncode": 1,
+      "timeout": false,
+      "scope": "single entry; default partial compilation; not full app/host execution"
+    },
+    "targets": {}
+  },
+  {
+    "eval_id": 6,
+    "group": "mpx",
+    "eslint": {
+      "returncode": 0,
+      "files": 11,
+      "errors": 0,
+      "warnings": 0
+    },
+    "compile": {
+      "returncode": 1,
+      "timeout": false,
+      "scope": "single entry; default partial compilation; not full app/host execution"
+    },
+    "targets": {
+      "wx": {
+        "success": false,
+        "errors": 1,
+        "warnings": 0
+      },
+      "ali": {
+        "success": false,
+        "errors": 0,
+        "warnings": 1
+      },
+      "ios": {
+        "success": false,
+        "errors": 3,
+        "warnings": 0
+      },
+      "android": {
+        "success": false,
+        "errors": 3,
+        "warnings": 0
+      },
+      "harmony": {
+        "success": false,
+        "errors": 3,
+        "warnings": 0
+      },
+      "web": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      }
+    }
+  },
+  {
+    "eval_id": 6,
+    "group": "noskill",
+    "eslint": {
+      "returncode": 0,
+      "files": 12,
+      "errors": 0,
+      "warnings": 0
+    },
+    "compile": {
+      "returncode": 1,
+      "timeout": false,
+      "scope": "single entry; default partial compilation; not full app/host execution"
+    },
+    "targets": {
+      "wx": {
+        "success": false,
+        "errors": 1,
+        "warnings": 0
+      },
+      "ali": {
+        "success": false,
+        "errors": 1,
+        "warnings": 0
+      },
+      "ios": {
+        "success": false,
+        "errors": 1,
+        "warnings": 0
+      },
+      "android": {
+        "success": false,
+        "errors": 1,
+        "warnings": 0
+      },
+      "harmony": {
+        "success": false,
+        "errors": 1,
+        "warnings": 0
+      },
+      "web": {
+        "success": false,
+        "errors": 1,
+        "warnings": 0
+      }
+    }
+  },
+  {
+    "eval_id": 7,
+    "group": "mpx",
+    "eslint": {
+      "returncode": 1,
+      "files": 14,
+      "errors": 1,
+      "warnings": 0
+    },
+    "compile": {
+      "returncode": 1,
+      "timeout": false,
+      "scope": "single entry; default partial compilation; not full app/host execution"
+    },
+    "targets": {
+      "wx": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "ali": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "ios": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "android": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "harmony": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "web": {
+        "success": false,
+        "errors": 2,
+        "warnings": 0
+      }
+    }
+  },
+  {
+    "eval_id": 7,
+    "group": "noskill",
+    "eslint": {
+      "returncode": 1,
+      "files": 10,
+      "errors": 1,
+      "warnings": 0
+    },
+    "compile": {
+      "returncode": 1,
+      "timeout": false,
+      "scope": "single entry; default partial compilation; not full app/host execution"
+    },
+    "targets": {
+      "wx": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "ali": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "ios": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "android": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "harmony": {
+        "success": true,
+        "errors": 0,
+        "warnings": 0
+      },
+      "web": {
+        "success": false,
+        "errors": 4,
+        "warnings": 0
+      }
+    }
+  }
+]

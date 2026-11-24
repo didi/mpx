@@ -1,4 +1,4 @@
-# 使用原子类
+# 使用原子类 {#use-utility-class}
 
 原子类(utility-first CSS)是近几年流行起来的一种全新的样式开发方式，在前端社区内取得了良好的口碑，越来越多的主流网站也基于原子类进行开发，我们耳熟能详的有[Github](https://github.com/)，[OpenAI](https://openai.com/)，[Netflix](https://top10.netflix.com/)
 和[NASA官网](https://www.jpl.nasa.gov/)
@@ -77,7 +77,8 @@
 
 ```js
 const { defineConfig } = require('unocss')
-const presetMpx = require('@mpxjs/unocss-base')
+const presetMpxModule = require('@mpxjs/unocss-base')
+const presetMpx = presetMpxModule.default || presetMpxModule
 
 module.exports = defineConfig({
   presets: [
@@ -89,21 +90,24 @@ module.exports = defineConfig({
 3. 注册`MpxUnocssPlugin`，在`build/getPlugins`中添加如下代码：
 
 ```js
-const MpxUnocssPlugin = require('@mpxjs/unocss-plugin')
+const MpxUnocssPluginModule = require('@mpxjs/unocss-plugin')
+const MpxUnocssPlugin = MpxUnocssPluginModule.default || MpxUnocssPluginModule
 // ...
 plugins.push(new MpxUnocssPlugin())
 ```
+
+> `@mpxjs/unocss-plugin@2.11.1` 与 `@mpxjs/unocss-base@2.11.1` 起以 ESM 形式发布。在 CommonJS 配置文件中通过 `require()` 加载时，需要兼容读取默认导出；以上写法同时兼容旧版 CommonJS 导出。在不额外启用实验参数的情况下，上述 CommonJS 兼容写法要求 Node.js 版本满足 `^20.19.0 || >=22.12.0`。
 
 即可在项目模版中使用基于`unocss`的原子类功能，`unocss`默认的preset兼容`tailwindcss`/`windicss`
 ，可以通过查阅[tailwindcss文档](https://tailwindcss.com/docs/installation)、[windicss文档](https://windicss.org/utilities/general/colors.html)或[unocss可交互文档](https://unocss.dev/interactive/)进行探索使用。
 
 关于`uno.config.js`可用配置项及`@mpxjs/unocss-plugin`及`@mpxjs/unocss-base`的配置项请参考[API文档](../../api/compile.md#mpxunocssplugin-配置)。
 
-### vscode插件支持
+### vscode插件支持 {#vscode-plugin-support}
 
 1. 安装 [unocss 官方插件](https://unocss.dev/integrations/vscode)。
 2.  修改 VSCode 设置中的 `unocss.languageIds` 选项（或者直接修改 VSCode JSON 配置文件），添加 "mpx"，实现智能提示等功能。
-  > _使用最新版本 [@mpxjs/cli](https://mpxjs.cn/guide/basic/start.html#%E5%AE%89%E8%A3%85%E8%84%9A%E6%89%8B%E6%9E%B6) 脚手架创建的项目会自动生成，可忽略这一步。_
+  > _使用最新版本 [@mpxjs/cli](../basic/start.md#install-scaffold) 脚手架创建的项目会自动生成，可忽略这一步。_
 
   ```json
   // .vscode/settings.json
@@ -115,18 +119,21 @@ plugins.push(new MpxUnocssPlugin())
   ```
 
 3. 修改 `uno.config.js` 支持 Mpx 预设。
-  > _使用 [@mpxjs/cli](https://mpxjs.cn/guide/basic/start.html#%E5%AE%89%E8%A3%85%E8%84%9A%E6%89%8B%E6%9E%B6) 脚手架创建的项目会自动生成，可忽略这一步。_
+  > _使用 [@mpxjs/cli](../basic/start.md#install-scaffold) 脚手架创建的项目会自动生成，可忽略这一步。_
 
   ```js
   // uno.config.js
   const { defineConfig } = require('unocss')
-  const presetMpx = require('@mpxjs/unocss-base')
+  const presetMpxModule = require('@mpxjs/unocss-base')
+  const presetMpx = presetMpxModule.default || presetMpxModule
 
   module.exports = defineConfig({
-    include: [/\.mpx($|\?)/],
-    presets: [
-      presetMpx()
-    ]
+    content: {
+      pipeline: {
+        include: [/\.mpx($|\?)/],
+      },
+    },
+    presets: [presetMpx()],
   })
   ``` 
 
@@ -294,7 +301,7 @@ plugins.push(new MpxUnocssPlugin())
 基于`unocss`的原子类支持`value auto-infer`（值自动推导），可以在模版中根据相关规则书写灵活的自定义值原子类，如`p-5px bg-[hsl(211.7,81.9%,69.6%)]`等，针对原子类中出现的`[` `(` `,`等特殊字符，在web中会通过转义字符`\`进行转义，由于小程序环境下不支持css选择器中出现`\`转义字符，我们内置支持了一套不带`\`的转义规则对这些特殊字符进行转义，同时替换模版和css文件中的类名，内建的默认转义规则如下：
 
 ```js
-const escapeMap = {
+const classEscapeMap = {
     '(': '_pl_',
     ')': '_pr_',
     '[': '_bl_',
@@ -311,21 +318,23 @@ const escapeMap = {
     '\'': '_q_',
     '"': '_dq_',
     '+': '_a_',
-    $: '_si_',
-    // unknown用于兜底不在上述范围中未知的转义字符
-    unknown: '_u_'
+    $: '_si_'
   }
 ```
 
-与此同时，用户也可以通过传递`@mpxjs/unocss-plugin`的[`escapeMap`配置项](../../api/compile.md#escapeMap)来覆盖内建的转义规则。
+该转义规则同时用于编译产物与运行时处理，为保证两端结果一致，不支持自定义。对于映射表以外的特殊字符，能够被 UnoCSS 规则正常处理的类名会使用内建兜底规则转义；未被 UnoCSS 处理的类名会输出编译错误。
+
+模板命中 `@mpxjs/unocss-plugin` 的 `scan` 规则时，`wx:class` 对象字面量中的 key 会和静态 `class` 使用相同的转义规则。插件会在扫描模板时将转义后的 key 转换为小程序可用的标识符，无法转换为合法标识符时会输出编译错误。
+
+未使用 `@mpxjs/unocss-plugin` 或模板未命中 `scan` 规则时，`wx:class` 对象字面量的 key 仅支持合法标识符以及包含空格或 `-` 的类名，其他无法转换为合法标识符的特殊字符会输出编译错误。如需在这类模板中使用 UnoCSS 特殊类名，需要通过 `scan.include` 将对应文件加入扫描范围。
 
 ### 原子类分包输出 {#subpackage}
 
 在web中，原子类会被全部打包输出单个样式文件，一般会放置在顶层样式表中以供全局访问，但在小程序中这种全量的输出策略并不是最优的，主要原因在于小程序中可供全局访问的主包体积存在**2M大小限制**，主包体积十分紧缺珍贵，Mpx在构建输出时遵循着分包优先的原则，尽可能充分利用分包体积从而减少对主包体积的占用，再进行原子类产物输出时，我们也遵循了相同的原则。
 
-在Mpx中，我们在收集原子类时同时记录了每个原子类的引用分包，在收集结束后根据每个原子类的分包引用数量决定该原子类应该输出到主包还是分包当中，我们在`@mpxjs/unocss-plugin`中提供了[`minCount`配置项](../../api/compile.md#minCount)来决定分包的输出规则，该配置项的默认值为2，即当一个原子类被2个或以上分包引用时，会被作为公共原子类抽取到主包中，否则输出到所属分包中，这也是全局最优的策略。当我们想要让原子类输出产物更少地占用主包体积时，我们也可以将`minCount`值调大，让原子类抽取到主包的条件更加苛刻，不过这样也会伴随着原子类分包冗余的增加。
+在Mpx中，我们在收集原子类时同时记录了每个原子类的引用分包，在收集结束后根据每个原子类的分包引用数量决定该原子类应该输出到主包还是分包当中，我们在`@mpxjs/unocss-plugin`中提供了[`minCount`配置项](../../api/compile.md#mincount)来决定分包的输出规则，该配置项的默认值为2，即当一个原子类被2个或以上分包引用时，会被作为公共原子类抽取到主包中，否则输出到所属分包中，这也是全局最优的策略。当我们想要让原子类输出产物更少地占用主包体积时，我们也可以将`minCount`值调大，让原子类抽取到主包的条件更加苛刻，不过这样也会伴随着原子类分包冗余的增加。
 
-`unocss.config.js`配置中定义的`safelist`原子类默认会输出到主包，为了组件局部使用的`safelist`有输出到分包的机会，我们在模版中提供了[`注释配置`](../../api/compile.md#commentConfig)（comments config），灵感来源于`webpack`中的魔法注释（magic comments），用户可以在组件模版中通过`注释配置`声明当前组件所需的`safelist`，对应的原子类也会根据上述的规则输出到主包或分包中，使用示例如下：
+`unocss.config.js`配置中定义的`safelist`原子类默认会输出到主包，为了组件局部使用的`safelist`有输出到分包的机会，我们在模版中提供了[`注释配置`](../../api/compile.md#commentconfig)（comments config），灵感来源于`webpack`中的魔法注释（magic comments），用户可以在组件模版中通过`注释配置`声明当前组件所需的`safelist`，对应的原子类也会根据上述的规则输出到主包或分包中，使用示例如下：
 
 ```html
 <template>
@@ -340,9 +349,9 @@ const escapeMap = {
 
 在小程序中，自定义组件的样式默认是隔离的，web中通过全局样式访问原子类的方式不再生效，不过由于小程序提供了[样式隔离配置](https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/wxml-wxss.html#%E7%BB%84%E4%BB%B6%E6%A0%B7%E5%BC%8F%E9%9A%94%E7%A6%BB)，我们可以将该组件样式隔离配置调整为`apply-shared`来获取页面或app中定义的原子类，但是当我们在使用传统类名和原子类混合开发或者迁移原子类的过程中，我们往往希望保留原本自定义组件的样式隔离。
 
-针对这种情况，我们在`@mpxjs/unocss-plugin`中提供了[`styleIsolation`配置项](../../api/compile.md#styleIsolation)，可选设置为`isolated`|`apply-shared`，当设置为`isolated`时每个组件都会通过`@import`独立引用主包或者分包的原子类样式文件，因此不会受到样式隔离的影响；当设置为`apply-shared`时，只有app和分包页面会引用对应的原子类样式文件，自定义组件需要通过配置样式隔离为`apply-shared`使原子类生效。
+针对这种情况，我们在`@mpxjs/unocss-plugin`中提供了[`styleIsolation`配置项](../../api/compile.md#styleisolation)，可选设置为`isolated`|`apply-shared`，当设置为`isolated`时每个组件都会通过`@import`独立引用主包或者分包的原子类样式文件，因此不会受到样式隔离的影响；当设置为`apply-shared`时，只有app和分包页面会引用对应的原子类样式文件，自定义组件需要通过配置样式隔离为`apply-shared`使原子类生效。
 
-在组件分包异步的情况下对应组件即使将样式隔离配置为`apply-shared`的情况下，`@mpxjs/unocss-plugin`也需要将`styleIsolation`设置为`isolated`才能正常工作，原因在于组件分包异步的情况下，组件被其他分包的页面所引用渲染，由于上述原子类样式分包输出的规则，其他分包的页面中可能并不包含当前组件所需的原子类，只有在`isolated`模式下由组件自身引用所需的原子类样式才能保证正常work，类似于`safelist`，我们也提供了[`注释配置`](../../api/compile.md#commentConfig)的方式对组件的`styleIsolation`模式进行局部配置，示例如下：
+在组件分包异步的情况下对应组件即使将样式隔离配置为`apply-shared`的情况下，`@mpxjs/unocss-plugin`也需要将`styleIsolation`设置为`isolated`才能正常工作，原因在于组件分包异步的情况下，组件被其他分包的页面所引用渲染，由于上述原子类样式分包输出的规则，其他分包的页面中可能并不包含当前组件所需的原子类，只有在`isolated`模式下由组件自身引用所需的原子类样式才能保证正常work，类似于`safelist`，我们也提供了[`注释配置`](../../api/compile.md#commentconfig)的方式对组件的`styleIsolation`模式进行局部配置，示例如下：
 ```html
 <template>
     <!-- mpx_config_styleIsolation: 'isolated' -->
@@ -351,16 +360,3 @@ const escapeMap = {
     <!-- ... -->
 </template>
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-

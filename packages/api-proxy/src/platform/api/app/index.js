@@ -4,6 +4,10 @@ const onError = ENV_OBJ.onError || envError('onError')
 
 const offError = ENV_OBJ.offError || envError('offError')
 
+const onPageNotFound = ENV_OBJ.onPageNotFound || envError('onPageNotFound')
+
+const offPageNotFound = ENV_OBJ.offPageNotFound || envError('offPageNotFound')
+
 const onAppShow = ENV_OBJ.onAppShow || envError('onAppShow')
 
 const offAppShow = ENV_OBJ.offAppShow || envError('offAppShow')
@@ -18,5 +22,7 @@ export {
   offAppShow,
   offAppHide,
   onError,
-  offError
+  offError,
+  onPageNotFound,
+  offPageNotFound
 }

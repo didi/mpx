@@ -1,0 +1,11 @@
+[
+  "执行环境为 DeepSeek Harness 0.2.1-rc.5（desktop profile）subagent，provider deepseek-official，模型 DeepSeek-V4.1-Flash（构建 1017，接口别名 deepseek-flash），推理等级 High，执行日期 2026-11-03；复现需同时固定 harness 版本与构建号 1017。与 iteration-2 的 gpt-6.1-sol（codex exec）模型不同，绝对分不可直接比较。",
+  "题目与 48 条断言从 git 0508ba54c（iteration-1）恢复；iteration-2 原始输入已删除，不能称为逐字复现。",
+  "首轮 8 次运行因评分提示词误放在运行目录内被部分执行者读到，已整体作废，移动评分资料后重跑；正式成绩只取重跑结果。",
+  "评分口径对齐 iteration-2：被上游缺陷遮挡但自身实现正确的断言判 passed 并记 blocked_by；reactive-switcher/noskill 的 script.props-live 与 template.event-chain 据此由 pending 改判 passed。",
+  "noskill 失分集中在需要框架契约的场景：响应式组件暴露与动态组件注册、路由解码与 RN 分包钩子、请求任务句柄与取消语义。",
+  "交付后独立验证：mpx 组 2 个场景存在编译错误（routing-subpackage 六目标 1 error、ssr-shared-state RN 三端 1 error），其余仅有 warning；noskill 组 5 个场景存在编译错误，其中 reactive-switcher 另有 39 条 ESLint error。",
+  "静态断言通过不代表构建或真机通过；真机、浏览器、SSR hydration、完整 App 构建均未验证。",
+  "隔离为目录级 + 提示词级，弱于 iteration-2 的文件工具白名单；16/16 事后审计未发现读取运行目录外的仓库路径。",
+  "token 为会话日志中逐步 input+output+cacheRead 的累加，口径高于 CLI 的 input+output，跨轮不可并列。"
+]

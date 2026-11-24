@@ -1,0 +1,1591 @@
+{
+  "archived_reports_only": true,
+  "runs": [
+    {
+      "eval_id": 0,
+      "title": "构建目标、条件文件与配置归属",
+      "group": "mpx",
+      "expectations": [
+        {
+          "id": "config.target-dialect",
+          "status": "passed",
+          "evidence": [
+            "outputs/plugin-options.js:3 `const target = process.env.MPX_MODE || 'wx'`，:7 `mode: target`，:9 `srcMode: 'wx'`；:2 注释明确目标仅 wx/ali/ios/android/harmony/web。",
+            "node 逐目标展开（MPX_MODE=wx/ali/ios/android/harmony/web，执行 outputs/plugin-options.js）：mode 依次为 wx/ali/ios/android/harmony/web，srcMode 恒为 'wx'。",
+            "outputs/plugin-options.js:6 显式说明 Skyline 不是 mode；全目录检索无 `mode: 'skyline'` 或 `mode: 'rn'` 赋值。",
+            "outputs/src/components/status-card.ios.mpx:1-6 条件模板无 `mode=`/`src-mode=` 区块筛选，按 references/base/conditional-compile.md:25-27 命中文件继承项目 srcMode=wx，仍按 wx 方言转换；outputs/src/pages/home.mpx:107、outputs/src/app.mpx:18 也仅用 `__mpx_mode__` 做 JSON 差异，未改写 srcMode。"
+          ],
+          "unverified": [
+            "未实际构建，未生成各目标产物确认 `__mpx_mode__` 注入及条件文件仍按 wx 方言转换的结果。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "config.rn-file-fallback",
+          "status": "passed",
+          "evidence": [
+            "outputs/src/pages/home.mpx:103 `usingComponents: { 'status-card': '../components/status-card' }` 仍为默认引用，未写 `.ios`。",
+            "outputs/src/components/status-card.ios.mpx:1 `<template>` 未加 `mode=\"ios\"` 筛选，:2 `bindtap=\"open\"`，:20-22 定义 `open()` 并 triggerEvent('open')；按 references/base/conditional-compile.md:31-37，android 命中 `.android.* → .ios.*`、harmony 命中 `.harmony.* → .ios.*`，回退后模板与 open 绑定均保留。",
+            "条件文件仅 `.ios.mpx`，无任何 `.web.*`；Web 仍走默认文件（outputs/src/components/status-card.mpx:1-9），未推广 RN 回退（references/base/conditional-compile.md:39）。"
+          ],
+          "unverified": [
+            "未构建 android/harmony 产物，未实际确认条件文件选择结果与 RN 模板渲染。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "config.native-import-boundary",
+          "status": "passed",
+          "evidence": [
+            "outputs/src/device-label.ios.js:2 `import { Platform } from 'react-native'`，:5 返回 `Platform.OS`；该文件即 RN 条件实现。",
+            "outputs/src/device-label.js:1-6 为默认实现，无 react-native import，返回 'mini-or-web'；outputs/src/pages/home.mpx:29 仍引用默认 `../device-label`，非 RN 目标解析默认文件。",
+            "references/base/conditional-compile.md:31-37（ios→`.ios.*`，android/harmony→`.ios.*`→默认）与 references/base/api-reference.md:212、227（`.ios.js` 条件文件，Android 构建可复用 `.ios.js`）说明 ios/android/harmony 三端均命中该文件拿到 Platform.OS。",
+            "全目录检索：src 下 `react-native` 仅出现在 outputs/src/device-label.ios.js:2，无共用模块顶层静态 import，调用方也未用运行时 if 兜底。"
+          ],
+          "unverified": [
+            "未安装 react-native 或执行 webpack 解析，未验证非 RN 目标构建确实不解析 `.ios.js`；harmony 上 Platform.OS 的具体取值未验证。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "config.skyline-json",
+          "status": "passed",
+          "evidence": [
+            "outputs/src/app.mpx:18-26 仅在 `__mpx_mode__ === 'wx'` 分支赋值：:19 `config.lazyCodeLoading = 'requiredComponents'`，:20-25 `config.rendererOptions = { skyline: { defaultDisplayBlock: true, defaultContentBox: true } }`，两项位于 rendererOptions.skyline 内而非 app 顶层。",
+            "node 展开 outputs/src/app.mpx 动态 JSON：wx 应用配置含 lazyCodeLoading 与 rendererOptions.skyline；ali/ios/android/harmony/web 五端均不含这两个字段。",
+            "outputs/src/pages/home.mpx:107-113 wx 分支设 renderer:'skyline'、componentFramework:'glass-easel'、navigationStyle:'custom'、disableScroll:true；node 展开确认仅 wx 产物出现。",
+            "outputs/src/pages/home.mpx:115-117 RN 分支仅补 disableScroll（references/rn/rn-json-reference.md:31 与 references/rn/index.md:28 明确 RN 支持且需要该字段），ali/web 展开后仅标题与 usingComponents；未向支付宝下发 disableScroll（references/ali/ali-json-reference.md:40 明确不支持）。",
+            "outputs/src/components/status-card.mpx:63-67 与 outputs/src/components/status-card.ios.mpx:49-52 组件 JSON 仅 `component: true`，页面字段未放入组件。"
+          ],
+          "unverified": [
+            "未构建，未在微信开发者工具分别验证 Skyline 与 WebView 回退下的渲染与滚动。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "config.external-classes",
+          "status": "passed",
+          "evidence": [
+            "outputs/plugin-options.js:11 `externalClasses: ['custom-class', 'i-class', 'accent-class']`，node 逐目标展开六端均为该三项（默认值两项被完整保留并新增 accent-class）。",
+            "outputs/src/components/status-card.mpx:15 声明三项，模板 :2 使用 custom-class、:4 使用 i-class、:7 使用 accent-class。",
+            "outputs/src/components/status-card.ios.mpx:12 同样声明三项，:2/:3/:4 分别使用 custom-class、i-class、accent-class。",
+            "outputs/src/pages/home.mpx:14-16 调用方分别传入 custom-class/i-class/accent-class，与 references/ali/ali-style-reference.md:39-47 要求的三方契约一致。"
+          ],
+          "unverified": [
+            "未在支付宝/RN/Web 实际验证三个外部类样式的最终生效结果。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "config.component2",
+          "status": "passed",
+          "evidence": [
+            "outputs/mini.project.json:1-3 内容为 `{ \"component2\": true }`，即支付宝开发者工具工程配置文件。",
+            "全目录检索 component2：源码中仅 outputs/mini.project.json:2 出现，outputs/src/app.mpx、outputs/src/pages/home.mpx 等 app/page JSON 均无该字段，outputs/plugin-options.js 也未写入插件选项。",
+            "outputs/verification.md:88 给出落点说明：该文件必须位于支付宝构建产物根目录（开发者工具打开 dist/ali 时读取），并说明经构建/静态拷贝进入 ali 产物根目录，不写进 app.json、页面 JSON 或插件选项。"
+          ],
+          "unverified": [
+            "未在支付宝开发者工具验证 component2 实际生效及基础库 >= 1.14.0 的运行时表现。"
+          ],
+          "blocked_by": []
+        }
+      ],
+      "review_notes": "六项断言均回到 outputs 源码取证通过：目标映射、条件文件回退、RN 依赖隔离、Skyline 层级、外部类与 component2 落点成立；未构建、未真机项已列入 unverified。"
+    },
+    {
+      "eval_id": 0,
+      "title": "构建目标、条件文件与配置归属",
+      "group": "noskill",
+      "expectations": [
+        {
+          "id": "config.target-dialect",
+          "status": "passed",
+          "evidence": [
+            "outputs/plugin-options.js:10 —— TARGET_MODES = ['wx','ali','ios','android','harmony','web']，不含 skyline/rn",
+            "outputs/plugin-options.js:12-20 —— mode 直接取 MPX_MODE，非法值（含 skyline/rn）在构建期抛错，未把 skyline/rn 当目标",
+            "outputs/plugin-options.js:22-24 —— 导出 mode 与常量 srcMode: 'wx'，未随目标变化",
+            "outputs/src/components/status-card.ios.mpx:2-7 —— 条件命中文件中的模板未声明 src-mode，仍继承 wx 方言（全仓无 src-mode 声明，grep 结果仅 srcMode 出现在 plugin-options.js:24）"
+          ],
+          "unverified": [
+            "未执行 mpx build，未比对 wx/ali/ios/android/harmony/web 各目标实际产物中的模板转换结果",
+            "未验证当前 CLI 是否把 MPX_MODE 原样传入插件导致行为差异"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "config.rn-file-fallback",
+          "status": "passed",
+          "evidence": [
+            "outputs/src/pages/home.mpx:80-82 —— usingComponents 仍引用默认 './components/status-card.mpx'，引用路径未改",
+            "outputs/src/components/status-card.ios.mpx:2-7 —— 模板为无条件 <template>（去掉了只限 ios 的 mode 声明），android/harmony 经 .ios.* 回退命中后仍有可渲染节点",
+            "outputs/src/components/status-card.ios.mpx:3 —— bindtap=\"open\" 绑定保留；:13-17 —— methods.open 存在并 triggerEvent('open')",
+            "outputs/src/pages/home.mpx:15 —— 父组件 bindopen=\"onStatusCardOpen\" 与子组件事件契约衔接",
+            "outputs/src/device-label.ios.js + .android.js + .harmony.js —— 回退链只落在 RN 三端，未提供任何 .web.* 条件文件，也未把回退推广到 Web"
+          ],
+          "unverified": [
+            "未构建或运行 RN，未实证 android/harmony 实际选中的是 .ios.mpx 而非默认文件",
+            "未验证 RN 侧 class/externalClasses 在该模板下的渲染细节（属于样式断言，不影响本断言的模板与事件契约）"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "config.native-import-boundary",
+          "status": "passed",
+          "evidence": [
+            "outputs/src/device-label.js:1-6 —— 默认实现无任何 import，返回 'mini-or-web'，非 RN 端解析该文件即无 react-native 依赖",
+            "outputs/src/device-label.ios.js:2 —— 仅 ios 条件文件顶部 import { Platform } from 'react-native'",
+            "outputs/src/device-label.android.js:2 与 outputs/src/device-label.harmony.js:2 —— 分别只在各自 RN 目标文件内 import，返回 Platform.OS，三端均能取平台名",
+            "outputs/src/pages/home.mpx:25 —— 业务侧只 import '../device-label'，未保留共用模块顶层静态 import"
+          ],
+          "unverified": [
+            "未运行 webpack/Metro，未比对 wx/ali/web 的模块图是否确实不含 react-native",
+            "未验证 harmony 目标下 Platform.OS 的实际取值字符串"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "config.skyline-json",
+          "status": "failed",
+          "evidence": [
+            "outputs/src/app.mpx:3-8 —— app 默认 JSON 只有 pages，缺 lazyCodeLoading（参考 skyline/skyline-json-reference.md:21 要求 app.json 顶层必填）",
+            "outputs/src/app.mpx:11-21 —— app 的 wx 块只有 window，未出现 rendererOptions.skyline；参考 skyline/skyline-json-reference.md:26 规定 defaultDisplayBlock/defaultContentBox 配在应用 JSON 的 rendererOptions.skyline",
+            "outputs/src/pages/home.mpx:87-98 —— block/content-box 被写到页面 JSON 的 rendererOptions.skyline，层级与参考要求不符（reference:26,59）",
+            "outputs/src/pages/home.mpx:88-98 —— 页面只有 renderer 与 sdkVersion 区间，缺 componentFramework: 'glass-easel' 与 disableScroll: true（参考 skyline/skyline-json-reference.md:63-86 及 skyline/index.md:33）",
+            "outputs/src/app.mpx:13-14 —— custom 导航写在 app window.navigationStyle，页面 JSON 内无 navigationStyle: 'custom'",
+            "grep 全目录：无 lazyCodeLoading、componentFramework、disableScroll 任何出现（outputs 内仅 verification.md 自述）"
+          ],
+          "unverified": [
+            "未在微信 DevTools 展开 app.json/home.json 产物，未确认微信是否会忽略页面级 rendererOptions",
+            "未验证 WebView 灰度回退在缺 lazyCodeLoading/glass-easel 时的可用性",
+            "其他目标是否被污染：仅凭 mode=wx 块静态判断，未比对 ali/rn/web 产物 JSON"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "config.external-classes",
+          "status": "passed",
+          "evidence": [
+            "outputs/plugin-options.js:27 —— externalClasses: ['custom-class','i-class','accent-class']，自定义数组未覆盖掉默认两个外部类",
+            "outputs/src/components/status-card.mpx:2-3 —— 静态 class 中 custom-class、i-class、accent-class 三者均被消费",
+            "outputs/src/components/status-card.ios.mpx:3-4 —— ios 条件组件同样保留三个外部类占位",
+            "outputs/src/pages/home.mpx:11-13 —— 调用方分别传入 custom-class/i-class/accent-class 业务类名，插件配置、组件静态类、调用属性三方一致"
+          ],
+          "unverified": [
+            "未在支付宝 DevTools 查看组件产物 JSON 中注入的 externalClasses 数组",
+            "component2 关闭时支付宝端外部类样式注入是否生效未验证（根因归入 config.component2，不在此重复扣分）"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "config.component2",
+          "status": "failed",
+          "evidence": [
+            "outputs/mini.project.json:3-5 —— compileOptions.component2 明确为 false，支付宝开发者工具工程配置未启用 component2",
+            "outputs/mini.project.json:1-10 —— 文件本身放对位置（工程根/输出根，format 2），但开关值错误；参考 ali/ali-config-reference.md:36-40 要求 { \"component2\": true }",
+            "outputs/src/app.mpx:3-8 与 :24-32 —— component2 已从 app JSON 移除，方向正确，但工程文件仍关闭该能力",
+            "outputs/verification.md:79 —— 交付者自述保持 component2: false，与本断言要求相反"
+          ],
+          "unverified": [
+            "未在支付宝 DevTools 验证 format 2 / compileOptions.component2 的实际生效位置",
+            "未验证基础库版本是否满足 component2 >= 1.14.0"
+          ],
+          "blocked_by": []
+        }
+      ],
+      "review_notes": "前三项与外部类通过；Skyline 配置层级错误、缺 lazyCodeLoading/glass-easel/disableScroll；component2=false。"
+    },
+    {
+      "eval_id": 1,
+      "title": "图文布局、间距与样式作用范围",
+      "group": "mpx",
+      "expectations": [
+        {
+          "id": "layout.portable-grid",
+          "status": "passed",
+          "evidence": [
+            "outputs/product-card.mpx:79-83 .product-card__hero 使用 display:flex + flex-direction:row + padding:24rpx，原 display:grid 已移除，WebView/ali/web 与 RN 共用同一套 Flex 声明",
+            "outputs/product-card.mpx:7 image 节点带 class=product-card__photo；outputs/product-card.mpx:85-88 以单类选择器声明 width:240rpx/height:80rpx，宽高落到实际图片节点，不再依赖 .hero image 后代/标签选择器",
+            "outputs/product-card.mpx:71-76 根节点显式 display:flex + flex-direction:column，几何关系（600rpx 宽、图片 240×80、外层 24rpx 留白）与原片段一致"
+          ],
+          "unverified": [
+            "未执行 RN/ali/web 构建与真机渲染，总占位 288×128rpx 为静态推演（RN 的 rpx→数值换算按 rn-style-reference.md:173/183 的基准）"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "layout.margin-geometry",
+          "status": "passed",
+          "evidence": [
+            "outputs/product-card.mpx:90-95 title-wrap 仅保留 margin-bottom:24rpx；outputs/product-card.mpx:17 summary 未声明 margin-top（原 12rpx 已删除），WebView/Skyline/RN 有效间距均为 24rpx",
+            "outputs/product-card.mpx:112-115 details 仅保留 margin-top:20rpx；outputs/product-card.mpx:18-20 detail-heading 无 margin（原 12rpx 已删除），有效间距 20rpx",
+            "outputs/product-card.mpx:117-126 .product-card__stats 为 flex column，.product-card__stat 保留 margin-top/bottom:8rpx，flex 子项不折叠 → 相邻 16rpx（WebView flex、Skyline flex、RN flex 均为 16）",
+            "间距只表达一次（单侧），未出现全量相加或归零：24/20/16 三个基线值均保留"
+          ],
+          "unverified": [
+            "未在真机/浏览器量测实际像素，数值由 CSS 盒模型与 margin 折叠规则静态推导"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "layout.text-ellipsis",
+          "status": "passed",
+          "evidence": [
+            "outputs/product-card.mpx:9-16 标题 text 上：max-lines@wx=\"{{1}}\" + overflow@wx=\"ellipsis\"（Skyline），numberOfLines@ios|android|harmony=\"{{1}}\"（RN）",
+            "outputs/product-card.mpx:102-110 标题 text 的 width:100%、overflow:hidden 为全端基础声明；非 RN 分支（wx/ali/web）追加 display:block + white-space:nowrap + text-overflow:ellipsis，条件编译位于 @mpx-if 内（rn-style-practice.md:533-549 的等价写法）",
+            "outputs/product-card.mpx:90-95 title-wrap width:240rpx + overflow:hidden 提供宽度约束，实际承担截断的 text 自身也有 width:100% 与 overflow:hidden，宽度与裁剪落在同一节点",
+            "支付宝未依赖父级 white-space 继承，直接约束 text（grade_prompt 明确接受该方式）；未删除其他端必要的 nowrap/ellipsis 声明"
+          ],
+          "unverified": [
+            "未在支付宝完整 App 构建、Skyline 真机与 RN 容器验证打点效果；Skyline 的 max-lines/overflow 属性落在 text 上按 skyline-style-practice.md:166-171 的约定推定"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "layout.image-padding",
+          "status": "passed",
+          "evidence": [
+            "outputs/product-card.mpx:85-88 .product-card__photo 仅设置 width:240rpx/height:80rpx，无 padding，图片自身占位即 240×80rpx",
+            "outputs/product-card.mpx:79-83 .product-card__hero 以 padding:24rpx 承担四边留白（与 ali-style-reference.md:51-58 的建议一致），留白未重复加到 image 上",
+            "总占位 240+24×2 = 288rpx 宽、80+24×2 = 128rpx 高，符合 288×128rpx"
+          ],
+          "unverified": [
+            "未构建 ali/wx 产物量测盒模型，总占位按 padding 与图片自身尺寸静态相加"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "layout.responsive-breakpoint",
+          "status": "passed",
+          "evidence": [
+            "outputs/product-card.mpx:144-148 保留 @media screen and (max-width:400px)，其中唯一选择器 .product-card--wv 只挂在非 Skyline 节点上：outputs/product-card.mpx:4 以 wx:class 在 !isSkyline 时添加该类，Skyline 不会命中该规则",
+            "outputs/product-card.mpx:151-153 Skyline 专用 .product-card--narrow 由运行时动态类控制；outputs/product-card.mpx:36-52 阈值 narrowMaxWidth=400、windowWidth<=400，与媒体查询的 max-width:400px 边界一致",
+            "outputs/product-card.mpx:54-60 在 Skyline 下注册 onWindowResize/offWindowResize，窗口变化时更新 isNarrow，不是只按启动时宽度计算；RN 媒体查询与 rpx 会随 dimensionsBase（默认 window）尺寸变化重算（rn-style-reference.md:187）",
+            "媒体查询内没有不受条件约束的 .product-card 规则，Skyline 即使忽略 @media 条件也不会命中 560rpx"
+          ],
+          "unverified": [
+            "支付宝 ACSS 的 @media 支持范围未在参考中明确，未做 ali 完整构建验证；Skyline 上 onWindowResize 是否触发未实测；演示页未实际切换 399px/401px 窗口"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "layout.style-isolation",
+          "status": "passed",
+          "evidence": [
+            "outputs/demo.mpx:6 页面持有 .badge 节点，outputs/demo.mpx:71-76 页面 .badge 仍为 color:#ff0000，父组件样式未被删除",
+            "outputs/product-card.mpx:135-141 组件内官方标签使用 product-card__badge / product-card__badge-text 前缀类，颜色 #1677ff；组件样式区块内不存在 .badge 选择器，页面红色 .badge 不会命中组件内部节点，组件样式也不会命中页面 .badge",
+            "outputs/demo.mpx:11-18 两个 product-card 实例使用同一组件样式，兄弟实例与页面之间无同名类交叉；方案未依赖微信默认隔离，而是用全量 product-card__ 前缀规避 ali/web 的全局样式冲突（并非删除父组件样式）"
+          ],
+          "unverified": [
+            "未执行支付宝完整 App 构建验证；未使用 <style scoped> 或 autoScopeRules，隔离依赖类名前缀，属行为等价实现",
+            "支付宝全局样式对组件内部节点的潜在影响未做真机对照（本用例的 .badge 与组件类名已无交集）"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "layout.text-tree",
+          "status": "passed",
+          "evidence": [
+            "outputs/product-card.mpx:25-28 保障/官方改为横向相邻节点：<view class=\"product-card__rich\"><text>保障</text><view class=\"product-card__badge\"><text class=\"product-card__badge-text\">官方</text></view></view>，text 内不再嵌 view",
+            "outputs/product-card.mpx:129-133 .product-card__rich 声明 display:flex + flex-direction:row + align-items:center，Skyline/WebView/RN 下保障文本与官方标签横向展示且标签样式保留（#1677ff 位于 outputs/product-card.mpx:139-141）",
+            "outputs/product-card.mpx:10-15、17、19、22-23、26-27 全树 text 节点均只含文本/插值，无 text 内嵌 view 等非法结构，文本内容“保障”“官方”均未丢失"
+          ],
+          "unverified": [
+            "未在 Skyline/RN 真机验证渲染与横向布局，节点合法性依据 skyline-template-reference.md:58/80 与 rn 模板约束静态核对"
+          ],
+          "blocked_by": []
+        }
+      ],
+      "review_notes": "源码逐条核对：Grid 改 Flex、图片留白外移、标题三端省略、24/20/16 间距单侧表达、@media 限定非 Skyline、text 树拆分均落实；隔离改用类名前缀而非 scoped，行为等价。构建与真机项均未验证。"
+    },
+    {
+      "eval_id": 1,
+      "title": "图文布局、间距与样式作用范围",
+      "group": "noskill",
+      "expectations": [
+        {
+          "id": "layout.portable-grid",
+          "status": "passed",
+          "evidence": [
+            "outputs/product-card.mpx:98-103 图片区改为 display:flex + flex-direction:row + align-self:flex-start + padding:24rpx，未使用 grid/标签/后代选择器",
+            "outputs/product-card.mpx:4 图片节点绑定 product-card__photo 类；outputs/product-card.mpx:105-108 该类显式声明 width:240rpx、height:80rpx",
+            "outputs/product-card.mpx:82-86 卡片根节点 display:flex、flex-direction:column，纵向骨架在 RN/Skyline 均可用",
+            "outputs/product-card.mpx:110-152 全部选择器均为单类选择器，无 a b、image 等 RN/Skyline 不支持的选择器",
+            "skill-snapshots/mpx/references/rn/rn-style-reference.md:530,535 RN 支持 flex-direction、align-self；同文件 140 行起要求避免标签/后代选择器"
+          ],
+          "unverified": [
+            "未构建、未在 RN/Skyline/真机渲染，align-self 下 hero 内容定宽的实际盒宽仅做静态推导"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "layout.margin-geometry",
+          "status": "passed",
+          "evidence": [
+            "input/scenario.md:34 基线：title-wrap→summary 24rpx、details 顶部 20rpx、两个 stat 16rpx",
+            "outputs/product-card.mpx:82-86 根节点为 flex column，子项 margin 不再折叠，间距由显式值决定",
+            "outputs/product-card.mpx:110-116 与 122-124：title-wrap margin-bottom:24rpx、summary margin-top:0 → 24rpx",
+            "outputs/product-card.mpx:126-132：details margin-top:20rpx、detail-heading margin-top:0 → 20rpx（父子折叠归到父侧）",
+            "outputs/product-card.mpx:134-142：stats 仍为 flex column，stat 上下各 8rpx，flex item 不折叠 → 16rpx",
+            "skill-snapshots/mpx/references/rn/rn-style-practice.md:475-495 与 skill-snapshots/mpx/references/skyline/skyline-style-practice.md:30-45：不折叠端应采用单侧间距并清除首子节点 margin，实现与之一致"
+          ],
+          "unverified": [
+            "未实际渲染测量三处间距，结论为按盒模型静态核算"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "layout.text-ellipsis",
+          "status": "passed",
+          "evidence": [
+            "outputs/product-card.mpx:110-116 title-wrap 持有 width:240rpx、overflow:hidden、white-space:nowrap、text-overflow:ellipsis，WebView/支付宝/Web 由该块完成单行打点",
+            "outputs/product-card.mpx:118-120 text 自身显式 white-space:nowrap，不依赖支付宝 text 的 white-space 继承",
+            "outputs/product-card.mpx:7-13 text 上带 max-lines={{1}} + overflow=ellipsis（Skyline 文本打点）与 numberOfLines={{1}}（RN 单行省略）",
+            "outputs/product-card.mpx:110 width:240rpx 为文本提供受约束宽度，截断落在父容器、打点属性落在文本节点，符合『由父容器承担截断』的可接受形态（input/scenario.md:3）",
+            "skill-snapshots/mpx/references/skyline/skyline-style-practice.md:166-168 要求 max-lines/overflow 落在承载文本的 text 节点并保留 WebView 省略样式，实现满足",
+            "skill-snapshots/mpx/references/rn/rn-style-practice.md:533-550 单行打点使用 numberOfLines={{1}}，与实现一致"
+          ],
+          "unverified": [
+            "未构建，Skyline 运行时 text 内联宽度下的省略效果与支付宝真机打点未验证"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "layout.image-padding",
+          "status": "passed",
+          "evidence": [
+            "outputs/product-card.mpx:4 image 仅保留 mode=aspectFit 与 class，无内联 padding",
+            "outputs/product-card.mpx:105-108 图片自身 width:240rpx、height:80rpx，未设置 padding/border",
+            "outputs/product-card.mpx:98-103 hero 承担 padding:24rpx；hero 无显式宽度，内容区 240×80 + 四边 24 → 占位 288×128rpx（不依赖 box-sizing）",
+            "skill-snapshots/mpx/references/ali/ali-style-reference.md:51-59 图片留白交给外层容器、图片只设自身尺寸，实现与之一致"
+          ],
+          "unverified": [
+            "未渲染测量 hero 实际盒尺寸，288×128rpx 为静态盒模型推导"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "layout.responsive-breakpoint",
+          "status": "failed",
+          "evidence": [
+            "outputs/product-card.mpx:92-96 保留 @media screen and (max-width:400px)，内部选择器为 .product-card（卡片根节点自身持有的类）",
+            "skill-snapshots/mpx/references/skyline/skyline-style-practice.md:292 与 skill-snapshots/mpx/references/skyline/skyline-style-reference.md:250：Skyline 忽略 @media screen 条件但保留内部声明，媒体查询内选择器必须只命中非 Skyline 节点；此处 .product-card 会命中 Skyline 节点",
+            "outputs/product-card.mpx:82-96 media 规则位于 .product-card 基础规则与 .product-card--narrow 之后且同为单类优先级，Skyline 下恒取 560rpx，窗口 >400px 也不回到 600rpx，且不随窗口变化",
+            "outputs/product-card.mpx:88-90 运行时 .product-card--narrow 已被后置 media 规则覆盖，无法补偿 Skyline 的恒定宽度",
+            "outputs/product-card.mpx:55-72 虽有 getSystemInfoSync + onWindowResize 的运行时窄屏计算（该部分本身可取），但被上述 Skyline 命中规则破坏"
+          ],
+          "unverified": [
+            "未在开发者工具/真机切换窗口宽度实测；判断依据为 Skyline 媒体查询行为的参考约定"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "layout.style-isolation",
+          "status": "passed",
+          "evidence": [
+            "outputs/product-card.mpx:31-36,33-35 组件内官方标签使用 product-card__badge / product-card__badge-text 命名空间类，不再存在与页面同名的 .badge",
+            "outputs/product-card.mpx:150-152 蓝色 #1677ff 写在命名空间 text 类上，页面 .badge 规则不会命中该节点",
+            "outputs/demo.mpx:69-71 页面 .badge{color:red} 保留未删，demo.mpx:19-22 页面自绘徽标仍为红色；demo.mpx:7-13 两个兄弟实例共用同一组件类，互不串色",
+            "outputs/product-card.mpx:155-160 组件 json 声明 styleIsolation:isolated 作为小程序端补充",
+            "skill-snapshots/mpx/references/ali/ali-style-reference.md:19 支付宝无等价默认隔离、同名类会互相影响；实现通过唯一类名消除同名类冲突，属行为等价方案，且未删除父组件样式"
+          ],
+          "unverified": [
+            "未构建支付宝包；styleIsolation 在支付宝基础库可能被忽略，实际隔离由命名空间类保证"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "layout.text-tree",
+          "status": "passed",
+          "evidence": [
+            "outputs/product-card.mpx:7-14 title 的 text 内仅文本插值，无 view 等非法子节点",
+            "outputs/product-card.mpx:31-36 保障与官方标签改为 view 容器的相邻节点（text + view），text 内不再嵌 view",
+            "outputs/product-card.mpx:144-148 guarantee 为 display:flex、flex-direction:row、align-items:center，两个内容横向相邻",
+            "outputs/product-card.mpx:33-35 官方标签文本『官方』保留，未为规避限制删除标签；保障文本在 32 行保留",
+            "skill-snapshots/mpx/references/skyline/skyline-template-reference.md:58 text 只能嵌套 text，图文混排改用独立节点"
+          ],
+          "unverified": [
+            "未在 Skyline/RN 真机确认两段文本与标签的实际渲染样式"
+          ],
+          "blocked_by": []
+        }
+      ],
+      "review_notes": "仅窄屏断点失败：媒体查询选择器命中 .product-card，Skyline 忽略条件恒为 560rpx，运行时窄屏类被覆盖。其余布局、间距、省略、图片留白、隔离与节点树均有源码证据支持。"
+    },
+    {
+      "eval_id": 2,
+      "title": "刷新、吸顶与节点定位",
+      "group": "mpx",
+      "expectations": [
+        {
+          "id": "scroll.refresh-entry",
+          "status": "passed",
+          "evidence": [
+            "outputs/feed.mpx:30-32 —— 纵向实际滚动容器 #order-scroller 上 refresher-enabled/refresher-triggered/bindrefresherrefresh 均以 @wx|ios|android|harmony|web 限定，ali 产物不出现 refresher 属性与事件。",
+            "outputs/feed.mpx:145-148 —— showRefreshButton = mode ali 或 web，支付宝走显式按钮而非 refresher。",
+            "outputs/feed.mpx:7 —— 刷新按钮 bindtap=\"handleRefresh\"，按钮状态绑定 refreshing。",
+            "outputs/feed.mpx:189-203 —— handleRefresh 以 refreshing 门闩防重入，重置 requestSeq/loadedPage/orders 后只加载第 1 页，try/finally 必定复位 refreshing（失败可再刷）。",
+            "outputs/feed.mpx:164-184 —— 失败仅写 footer，不推进 loadedPage，下次刷新/触底可重试；outputs/data.js:22-37 提供 failOnce 注入。",
+            "outputs/feed.mpx:411-422 —— wx 页面 JSON 关闭 enablePullDownRefresh/disableScroll，ali 删除 disableScroll 并置 allowsBounceVertical='NO'。"
+          ],
+          "unverified": [
+            "未构建、未在真机/模拟器验证 Skyline、RN、Web 下拉手势是否实际触发 bindrefresherrefresh。",
+            "未实测支付宝刷新按钮点击后列表与 footer 的真实渲染时序。",
+            "未实测注入失败后连续点击/下拉的重试链路。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "scroll.pagination",
+          "status": "passed",
+          "evidence": [
+            "outputs/feed.mpx:28-34 —— 分页绑定在实际滚动容器 #order-scroller 上：scroll-y=\"{{true}}\"、bindscrolltolower=\"loadMore\"、lower-threshold=120。",
+            "outputs/feed.mpx:222-243、344-348 —— page height:100% + .page 100%/100vh/ali fixed 的列向 flex，.order-scroller flex:1，形成有界可滚动高度链；ali 用 position:fixed 贴边兜底。",
+            "outputs/feed.mpx:185-188 —— loadMore 以 loading/hasMore 双重门闩拦截重复触底。",
+            "outputs/feed.mpx:164-184 —— requestPage 入口 page<=loadedPage 直接返回，转底期间重复触底不会重复追加同一页；成功后 loadedPage/hasMore 推进。",
+            "outputs/data.js:2-5、outputs/feed.mpx:175-177 —— 60 条/3 页，第 3 页后 hasMore=false、footer 显示“已加载全部”，继续触底不再请求。"
+          ],
+          "unverified": [
+            "未实际运行 scroll-view，无法验证各端触底阈值与真实滚动高度。",
+            "未验证 RN 下 flex:1 scroll-view 与 page 样式组合的实际可视区域。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "scroll.event-payload",
+          "status": "passed",
+          "evidence": [
+            "outputs/feed.mpx:33 —— bindscroll=\"handleScroll\" 绑定在 scroll-view 上。",
+            "outputs/feed.mpx:204-206 —— handleScroll 读取 e.detail.scrollTop 并 Math.round 写回 scrollTop。",
+            "outputs/feed.mpx:5 —— 页面头部渲染 scrollTop: {{scrollTop}}px；以 {detail:{scrollTop:120}} 调用实际绑定函数即得 120。",
+            "参考核对：skyline-runtime-practice.md:52 与 rn-script-reference.md:88 均要求 scroll-view 改取 e.detail.scrollTop，实现一致。"
+          ],
+          "unverified": [
+            "未在实际渲染中执行事件对象调用并核对界面数值，仅做源码路径核对。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "scroll.sticky-renderer",
+          "status": "passed",
+          "evidence": [
+            "outputs/feed.mpx:36-48 —— Skyline 分支位于 scroll-view type@wx=\"custom\"（:28）内，sticky-section 的直接子节点 sticky-header 是首个子节点（:38），class=\"group-header\" 在 :351-357 显式 background-color:#ffffff，满足“首子节点且有背景”。",
+            "outputs/feed.mpx:141-144 —— useStickyComponents 用运行时 __mpx_mode__ + this.renderer 选支，未用 @wx 区分两种 renderer；ali 编译期为 false，未把 sticky-section 当作所有端通用节点。",
+            "outputs/feed.mpx:49-62 —— WebView/支付宝分支保留 CSS position:sticky 的等价实现（:350-357 的 position:sticky 只在 wx/ali 条件内）。",
+            "outputs/feed.mpx:29 —— RN/Web 的 scroll-view 开启 enable-sticky，配合 sticky-section/sticky-header（参考 rn-style-practice.md:450-451、web-template-reference.md:299-309 均记录该结构受支持）。"
+          ],
+          "unverified": [
+            "未在微信分别切换 Skyline/WebView 验证首帧 renderer 判定与吸顶表现。",
+            "支付宝 CSS sticky 的实际生效依赖宿主版本，参考 ali/ 未收录 sticky 支持，未真机验证。",
+            "wx 产物中 .group-header 的 position:sticky 同样命中 Skyline 的 sticky-header（Skyline 不支持 sticky 取值），属检查矩阵 warn 级残留，未消除。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "scroll.horizontal-width",
+          "status": "passed",
+          "evidence": [
+            "outputs/feed.mpx:13-14 —— 横向容器 scroll-x=\"{{true}}\" + enable-flex@wx，且 .cate-bar 有 display:flex;flex-direction:row（:291-294）。",
+            "outputs/feed.mpx:15-24 —— 两个直接内容子节点 .cate-panel-main/.cate-panel-extra 直接挂在 scroll-view 下（无单一 wrapper）。",
+            "outputs/feed.mpx:316-326 —— 直接子节点分别声明 width:100%（铺满视口）与 width:1200rpx（宽于视口）；ali/web 用 100vw（:317-322）等价。",
+            "outputs/feed.mpx:296-314 —— ali/web 改为 display:block + white-space:nowrap + inline-flex，非微信端不依赖 enable-flex 也能横滚。"
+          ],
+          "unverified": [
+            "未在 Skyline 真机核对第一段是否恰好等于视口宽。",
+            "RN 横向 ScrollView 中百分比宽度（100%）的实际解析、ali/web 的 100vw 实测均未验证。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "scroll.query-scope",
+          "status": "passed",
+          "evidence": [
+            "outputs/data.js:7-10 —— 定位目标 id 为 order-21（字母开头，合法），LOCATE_PAGE=ceil(21/20)=2。",
+            "outputs/feed.mpx:43、:57 —— 每个订单节点 id=\"{{order.id}}\" 且声明 wx:ref，满足 RN 节点可寻址/可查询前提。",
+            "outputs/feed.mpx:207-214 —— handleLocate 先 loadPagesUntil(2) 补齐目标页，再校验 loadedPage，随后清空再于 $nextTick 设 order-21，重复点击可再次触发。",
+            "outputs/feed.mpx:34 —— 通过 scroll-into-view 声明式定位（Skyline 支持，见 skyline-template-reference.md:73；RN 要求目标带 wx:ref，见 rn-template-reference.md:195），未使用 createSelectorQuery/in(this)，故不存在数字 id、丢弃 in 返回值或只挂 ref 不实现定位的问题。"
+          ],
+          "unverified": [
+            "未在 RN/Skyline 真机验证 scroll-into-view 能定位到 sticky-section/分组 view 内的嵌套 order-21 节点。",
+            "未实测点击按钮后列表滚动到订单 21 的实际行为。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "scroll.scrollbar-boolean",
+          "status": "passed",
+          "evidence": [
+            "outputs/feed.mpx:13、:29 —— 横向与纵向两个 scroll-view 均写 show-scrollbar=\"{{false}}\"（布尔 false 绑定，非字符串 false）。",
+            "outputs/feed.mpx:13-14、:29 —— 微信侧另加 enhanced@wx=\"{{true}}\"，非微信不输出 enhanced。",
+            "outputs/feed.mpx:220-401 —— 样式区无 ::-webkit-scrollbar 等全局滚动条规则；grep 仅命中两处 show-scrollbar 属性。"
+          ],
+          "unverified": [
+            "未在完整 App/真机验证滚动条是否真正隐藏；Web 参考未确认 show-scrollbar 映射可用，RN 同样未实测。"
+          ],
+          "blocked_by": []
+        }
+      ],
+      "review_notes": "逐条核源码：四端刷新、容器触底、detail.scrollTop、吸顶双分支、子节点宽度、合法 id、布尔 show-scrollbar 均落实；未构建未真机，ali sticky/RN 横宽待实测。"
+    },
+    {
+      "eval_id": 2,
+      "title": "刷新、吸顶与节点定位",
+      "group": "noskill",
+      "expectations": [
+        {
+          "id": "scroll.refresh-entry",
+          "status": "passed",
+          "evidence": [
+            "outputs/feed.mpx:14-16 工具栏「刷新」按钮 bindtap=onRefreshTap，位于滚动容器外、四端共用，是支付宝/RN/web 的显式刷新入口",
+            "outputs/feed.mpx:190 enableRefresher=IS_WX（:165 IS_WX=MODE==='wx'），配合 :94-95 的 refresher-enabled/refresher-triggered，非 wx 端 refresher 关闭、不依赖该事件",
+            "outputs/feed.mpx:378-381 onRefreshTap→reload()；:228-245 reload 固定加载第 1 页并在成功时 :243-244 复位 scrollTop 且滚回首组（重置到第一页）",
+            "outputs/feed.mpx:246-256 失败分支保留旧数据，finally 无条件复位 refreshing/refresherTriggered（刷新失败后仍可再次刷新）",
+            "outputs/feed.mpx:421-426 injectFailure()+reload 注入一次失败；:406-411 onRetry 按 loadErrorScope 重跑刷新/定位/分页；outputs/data.js:23-25,39-43 失败次数消费完即恢复正常",
+            "outputs/feed.mpx:383-390 onRefresherRefresh 仅 wx 下拉路径触发，仍走同一 reload 与 finally 收尾"
+          ],
+          "unverified": [
+            "refresher-* 属性与 bindrefresherrefresh 未用 @wx 后缀隔离（仅靠 enableRefresher=false 关闭），支付宝编译告警/忽略行为未构建验证",
+            "未真机验证 wx 下拉手势与 ali 按钮刷新的实际表现；<script name=\"json\"> 用裸 JSON 字面量（:746-751）与参考的动态 JSON（module.exports）/静态 JSON（type=\"application/json\"）写法不一致，能否编译出 enablePullDownRefresh=false 未验证"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "scroll.pagination",
+          "status": "passed",
+          "evidence": [
+            "outputs/feed.mpx:87-92 纵向 scroll-view 具备 scroll-y={{true}}、type=\"custom\"、lower-threshold，:100 bindscrolltolower=onScrollToLower 直接绑在该容器上",
+            "outputs/feed.mpx:450-452 根节点非 RN 用 height:100vh，:635-639 .order-feed__feed 用 flex:1 + height:0，在纵向 flex 中形成有界可滚动区域",
+            "outputs/feed.mpx:392-395 触底先判 loading/refreshing/hasMore 再 fetchNext",
+            "outputs/feed.mpx:260-267 同步置 loading=true 上锁；:274 校验 seq 与 page===data.page+1，避免同一页重复追加",
+            "outputs/feed.mpx:291-294 applyGroups 后 hasMore=已加载<TOTAL；outputs/data.js:6-7,44-46 每页 20 条、共 60 条，第 3 页后停止",
+            "未保留 onReachBottom，全文无该页面钩子"
+          ],
+          "unverified": [
+            "RN 的 lower-threshold 仅接受 number（rn/rn-template-reference.md:189），模板 :91 传字符串 \"120\"，可能回退默认 50；未构建/真机验证",
+            "Skyline type=\"custom\" 下 bindscrolltolower 与 flex:1;height:0 的实际滚动表现未验证"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "scroll.event-payload",
+          "status": "passed",
+          "evidence": [
+            "outputs/feed.mpx:99 bindscroll=\"onFeedScroll\" 绑在纵向 scroll-view 上",
+            "outputs/feed.mpx:397-403 onFeedScroll 从 event.detail.scrollTop 取值（Math.round）写入 this.data.scrollTop，未使用 e.scrollTop",
+            "outputs/feed.mpx:6 模板渲染 \"scrollTop {{scrollTop}}px\"，首次以 {detail:{scrollTop:120}} 调用时 _scrollTick 为空可直接写入 120",
+            "未保留 onPageScroll 页面钩子"
+          ],
+          "unverified": [
+            "outputs/feed.mpx:399-401 的 60ms 节流会丢弃窗口内的后续事件，展示值最多滞后一个窗口；未真机验证 RN/ali 的 detail.scrollTop 字段"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "scroll.sticky-renderer",
+          "status": "failed",
+          "evidence": [
+            "outputs/feed.mpx:104-107 组标题是 .order-feed__group 内的普通 view，:657-661 仅以 position: sticky; top:0 实现吸顶，且 :105 让 Skyline 与 WebView 共用同一份（只有 RN 剔除）",
+            "skyline/skyline-style-reference.md:122 明确 Skyline 的 position 仅支持 static/relative/absolute/fixed，不支持 sticky；故 Skyline renderer 下组标题不吸顶，verify 要求未达成",
+            "skyline/skyline-style-practice.md:112-114 要求 Skyline 用 scroll-view type=\"custom\" 内 sticky-section/sticky-header（header 为 section 首子节点并显式背景）；outputs/feed.mpx 全文无 sticky-section/sticky-header/enable-sticky（grep 无命中），未做 renderer 分支",
+            "RN 兜底 outputs/feed.mpx:82-84、310-318 用滚动容器外的固定标题条 + px 偏移换算，未使用 rn/rn-style-practice.md:448-451 要求的 sticky-header + enable-sticky 结构"
+          ],
+          "unverified": [
+            "RN 固定标题条依赖 44px/64px 行高换算（:156-157、300-318），实际是否与 scrollTop 单位一致未真机验证",
+            "WebView/ali/web 的 sticky 依赖宿主内核，未真机验证"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "scroll.horizontal-width",
+          "status": "passed",
+          "evidence": [
+            "outputs/feed.mpx:34-41 横向 scroll-view：scroll-x={{true}}、type=\"custom\"、enable-flex={{true}}，自身无 padding/margin",
+            "outputs/feed.mpx:42-79 直接子节点恰好是两个面板，未再包 track/内部容器",
+            "outputs/feed.mpx:555-563 第一个面板 width:750rpx（=一个视口宽）、第二个 width:1200rpx，配合 :546-552 box-sizing:border-box 与 flex-shrink:0，宽度不被内边距/flex 收缩改写",
+            "未使用「深层子元素 min-width/flex 反向撑开」的旧写法"
+          ],
+          "unverified": [
+            "支付宝不支持 enable-flex（ali/ali-template-reference.md:39），两面板在 ali 是否同行排布取决于 scroll-view 内部实现，未构建验证；web 同理"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "scroll.query-scope",
+          "status": "failed",
+          "evidence": [
+            "outputs/feed.mpx:104-107 分组 id=\"group-N\"、:113 订单 id=\"order-N\"，id 合法（不以数字开头），已不再是旧数字 id 21",
+            "outputs/feed.mpx:366-376 定位改为 scroll-into-view（:92 绑定），全文未使用 createSelectorQuery，也就不存在丢弃 query.in 返回值的问题",
+            "outputs/feed.mpx:334-363 onLocate→ensureLoaded(第 2 页)→scrollToAnchor('group-2')，按钮链路本身可触发滚动",
+            "rn/rn-template-reference.md:195 规定 RN 的 scroll-into-view 目标必须是已声明 wx:ref 的内置基础组件；outputs/feed.mpx 全文无任何 wx:ref（grep 无命中），目标 view（:104-107）在 RN 端不可被解析，定位不生效，未满足「RN 可查询节点」"
+          ],
+          "unverified": [
+            "wx/ali 端 scroll-into-view 到 group-2 的滚动效果未真机验证；定位到分组标题而非 order-21 节点，在 Skyline 吸顶失效后目标位置是否符合预期未验证"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "scroll.scrollbar-boolean",
+          "status": "passed",
+          "evidence": [
+            "outputs/feed.mpx:40 横向容器 show-scrollbar=\"{{false}}\"、:98 纵向容器 show-scrollbar=\"{{false}}\"，均为 Mustache 布尔 false，不是字符串 \"false\"",
+            "outputs/feed.mpx:39、97 enhanced=\"{{isWeixin}}\"，:165 与 :189 决定仅 wx 为 true，非 wx 端 enhanced 关闭（仅微信开启增强模式）",
+            "全文 grep scrollbar/::-webkit 仅命中 :40、:98 两处属性，无全局 scrollbar CSS"
+          ],
+          "unverified": [
+            "enhanced 未用 @wx 后缀隔离，支付宝会收到 enhanced=false 的未知属性，是否告警未验证",
+            "「完整 App/原本显示滚动条的设备」上的实际隐藏效果未复验（ali/ali-template-reference.md:74-75），RN/web 是否透传 show-scrollbar 未验证"
+          ],
+          "blocked_by": []
+        }
+      ],
+      "review_notes": "Skyline 用 position:sticky 吸顶失效、RN 定位缺 wx:ref 为主要失分点；刷新入口、分页、scrollTop、横向宽度与滚动条达标；JSON 块写法存疑。"
+    },
+    {
+      "eval_id": 3,
+      "title": "弹层、键盘与窗口尺寸",
+      "group": "mpx",
+      "expectations": [
+        {
+          "id": "dialog.mask-scroll",
+          "status": "passed",
+          "evidence": [
+            "outputs/checkout-dialog.mpx:2 根 view 仅绑定 catchtouchmove@wx=\"stopMove\"，未设置 disable-scroll，也没有全局 page 锁滚动",
+            "outputs/checkout-dialog.mpx:4-9 蒙层为独立节点，全文件唯一的 disable-scroll@ali 在第 7 行，只作用于蒙层",
+            "outputs/checkout-dialog.mpx:10-11 蒙层与 .checkout-dialog__layer 是兄弟节点，scroll-view（55-66 行）位于 layer/panel 内，不在 disable-scroll 子树",
+            "outputs/checkout-dialog.mpx:248 stopMove 为空处理器，仅靠 catchtouchmove 阻止微信背景滚动",
+            "outputs/checkout-dialog.mpx:2 根节点由 wx:if 控制，关闭后整体卸载；253-389 行样式无 page 级 overflow，关闭后背景恢复可滚",
+            "参考 ali/ali-template-reference.md:85-99 要求 disable-scroll 只给蒙层、可滚动弹层作兄弟节点，并在弹层外层用 catchtouchmove 空处理，本实现与之一致"
+          ],
+          "unverified": [
+            "未真机验证支付宝 disable-scroll 是否只锁蒙层而不影响兄弟 scroll-view",
+            "未验证微信 Skyline 下根节点 catchtouchmove 是否会连带影响内部 scroll-view 滚动（WebView 下为标准用法）"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "dialog.device-input",
+          "status": "passed",
+          "evidence": [
+            "outputs/checkout-dialog.mpx:32 与 :47 输入框使用 enableNative@ali=\"{{isAliIos}}\"，该属性只进入支付宝产物",
+            "outputs/checkout-dialog.mpx:145-147 仅在 __mpx_mode__ === 'ali' 时用 getDeviceInfo().platform === 'ios' 计算 isAliIos，未用 __mpx_mode__ === 'ios'（RN 目标）判断支付宝设备",
+            "outputs/checkout-dialog.mpx:85 用 __mpx_mode__ === 'ali' 区分手动键盘位移端，同样未混用 ios 编译目标",
+            "全文件无 adjust-position 属性，微信 Android 的默认自动上推未被关闭",
+            "参考 base/api-reference.md:511 约定 platform 取值 'ios'/'android'，ali/ali-template-reference.md:53-56 要求 Ali iOS 用 true、Android 用 false，并以运行时设备信息判断"
+          ],
+          "unverified": [
+            "未在支付宝 iOS/Android 真机核对 getDeviceInfo().platform 实际取值与 enableNative 生效效果",
+            "未真机验证微信 Android 自动上推与本地代码无 adjust-position 的实际表现"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "dialog.focus-readiness",
+          "status": "passed",
+          "evidence": [
+            "outputs/checkout-dialog.mpx:16 panel 绑定 bindtransitionend=\"handlePanelTransitionEnd\"，入场完成信号由组件自身动画连接",
+            "outputs/checkout-dialog.mpx:175-188 handleOpen 先置 entered=false，$nextTick 后 setTimeout(0) 再置 entered=true 触发入场 transition，未用固定延时替代就绪信号",
+            "outputs/checkout-dialog.mpx:198-201 transitionend 仅在 entered 为 true 且未触发过时进入 enterDone",
+            "outputs/checkout-dialog.mpx:202-207 enterDone 内检查 this.visible 与 this.focusField 后才设置 focusField='name'，即入场完成前不会聚焦",
+            "outputs/checkout-dialog.mpx:190-196 handleClose 立即置 entered=false 并清空 focusField；旧入场回调到达时 198 行先因 entered=false 返回，且 205 行再次校验 visible，不会重新拉起键盘"
+          ],
+          "unverified": [
+            "未真机确认支付宝 / Skyline 的 view 是否派发 transitionend；若不派发，enterDone 不触发，首次聚焦不会发生",
+            "未验证入场动画被快速关闭/重开打断时各端 transition 事件的实际派发顺序"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "dialog.keyboard-order",
+          "status": "passed",
+          "evidence": [
+            "outputs/checkout-dialog.mpx:219-227 focus 时记录 activeField/focusField；支付宝端用已缓存 keyboardHeight 恢复 offset，覆盖切换输入框不再发高度事件的情况",
+            "outputs/checkout-dialog.mpx:228-234 blur 只在失焦字段等于当前焦点时清理 activeField/focusField，任何 blur 都不会把 keyboardOffset 清零，因此 focus(B)→blur(A) 不会闪回",
+            "outputs/checkout-dialog.mpx:208-218 键盘高度事件先缓存；height>0 时仅有焦点才上推（覆盖高度事件早于 focus），height===0 才复位",
+            "outputs/checkout-dialog.mpx:171-174 resetKeyboard 只在 handleOpen/handleClose（175-196 行）调用，切换期间不复位",
+            "outputs/checkout-dialog.mpx:85、151-153、158-160 手动键盘位移只在 ali 注册监听；132 行 translateY 使用 keyboardOffset，其余端结构上恒为 0，不和宿主自动避让叠加",
+            "outputs/checkout-dialog.mpx:219-234 的逻辑不依赖 focus 与 keyboardheightchange 的固定先后，两条事件序列均可回放通过"
+          ],
+          "unverified": [
+            "最终失焦复位依赖 onKeyboardHeightChange 的 height=0 事件，代码未在 blur 后做延后焦点检查复位；若某端不派发收起事件，面板会停留上推状态",
+            "未验证支付宝 onKeyboardHeightChange 的支持情况与触发时机，以及支付宝宿主是否已自动上推固定弹层（若已上推则手动位移可能二次叠加）",
+            "未验证 Android 键盘弹起是否触发 onWindowResize 缩短窗口并与手动 offset 产生叠加"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "dialog.window-units",
+          "status": "passed",
+          "evidence": [
+            "outputs/size.js:10-14 getSafeBottom 在 safeArea 缺失时返回 0，否则返回 Math.max(0, screenHeight - safeArea.bottom)，800-780 即 20，且未再除 pixelRatio",
+            "outputs/size.js:24-33 getDialogMetrics 用 windowSize.windowHeight 或 getWindowInfo().windowHeight 作为窗口高度，windowHeight=700 时 maxHeight=700，未重复扣状态栏/导航栏",
+            "outputs/size.js:26-31 safeBottom 与窗口高度均按逻辑 px 处理，安全区与屏幕高度同坐标同单位",
+            "outputs/size.js:24-33 无模块级旧尺寸缓存，每次调用读取新窗口信息；新窗口数据不会被旧缓存覆盖",
+            "outputs/checkout-dialog.mpx:163-170 updateMetrics 接收 onWindowResize 的 e.size 重新计算 panelHeight/safeBottom，149-153 行注册、156-160 行注销",
+            "outputs/checkout-dialog.mpx:124-129 panelStyle 使用 panelHeight 与 safeBottom + 基础留白，safeArea=null 时安全区额外留白为 0",
+            "参考 ali/ali-api-reference.md:32-46 要求布局用 windowHeight、safeBottom 用 screenHeight - safeArea.bottom 且缺失时加 0，本实现与之一致"
+          ],
+          "unverified": [
+            "未运行真实数值测试，20/700 为静态代入 size.js 公式所得",
+            "未真机验证窗口旋转时 getWindowInfo 是否即时刷新；windowHeight 可来自 resize 入参而 safeBottom 固定取自 getWindowInfo()，若宿主缓存旧安全区会短暂不同步",
+            "未验证 safeArea 为 null 且 screenHeight 缺失等异常字段组合下的表现"
+          ],
+          "blocked_by": []
+        }
+      ],
+      "review_notes": "五项实现与参考契约一致：蒙层/内容拆分、按运行时系统设 enableNative、入场后聚焦、切换序列保持位移、窗口尺寸与安全区同单位。残留风险主要是真机未验证的 transitionend 与支付宝键盘高度/自动上推行为。"
+    },
+    {
+      "eval_id": 3,
+      "title": "弹层、键盘与窗口尺寸",
+      "group": "noskill",
+      "expectations": [
+        {
+          "id": "dialog.mask-scroll",
+          "status": "failed",
+          "evidence": [
+            "outputs/checkout-dialog.mpx:3-8 蒙层与 pusher 为兄弟节点，scroll-view 位于 pusher 内（:58），蒙层不是 scroll-view 的祖先。",
+            "outputs/checkout-dialog.mpx:6 蒙层绑定 catchtouchmove=\"noop\"，:14/:20/:66 面板非滚动区同样绑定，:186 noop 为空实现。",
+            "outputs/checkout-dialog.mpx:2-74 全文无 disable-scroll，也没有 @ali 条件属性；支付宝端未把“锁滚动”限定在蒙层，只复用了微信式的 catchtouchmove。参考 ali/ali-template-reference.md:85 明确支付宝应在蒙层使用 disable-scroll，微信才用 catchtouchmove。",
+            "outputs/checkout-dialog.mpx:311-320 根容器仅做 fixed 定位，没有页面级 overflow 或全局滚动锁；:221-224 关闭后卸载，背景可恢复滚动。"
+          ],
+          "unverified": [
+            "支付宝端蒙层 catchtouchmove 能否等效阻止页面滚动未真机验证；参考只把 catchtouchmove 归为微信用法，并要求支付宝用 disable-scroll@ali。",
+            "scroll-view 依赖 flex:1/min-height:0（outputs/checkout-dialog.mpx:402-406）取得高度，真机是否可滚动未验证。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "dialog.device-input",
+          "status": "passed",
+          "evidence": [
+            "outputs/checkout-dialog.mpx:84-95 targetPlatform 只表示输出端（__mpx_mode__），设备系统由 mpx.getDeviceInfo()（缺失时回退 getSystemInfoSync）的 platform/system 正则判定，未使用 __mpx_mode__ === 'ios'。",
+            "outputs/checkout-dialog.mpx:105-112 enableNative = aliIOS，adjustPosition = wx 或 ali+Android，manualAvoidance 仅 ali+iOS；:155-156 写入 data，:30-31/:49-50 绑定到两个 input。",
+            "由此 ali+iOS enableNative=true、ali+Android=false；wx（含 Android）adjust-position=true，系统自动上推未被关闭；RN/web 保持原值 false。"
+          ],
+          "unverified": [
+            "未真机验证支付宝 mpx.getDeviceInfo() 返回 platform/system 的时机与取值。",
+            "enableNative 未加 @ali 后缀、adjust-position 被写到支付宝端；参考 ali/ali-template-reference.md:37 将 adjust-position 列为支付宝 input 不支持属性，编译告警/真实行为未验证。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "dialog.focus-readiness",
+          "status": "passed",
+          "evidence": [
+            "outputs/checkout-dialog.mpx:152 初始 focusField 为空串，:26/:45 的 focus 绑定 focusField 而非 visible，避免 visible 一变就聚焦。",
+            "outputs/checkout-dialog.mpx:192-209 openDialog 先置 opened=true、entered=false，nextTick 后置 entered=true，并以 ENTER_DURATION+100ms 兜底；:228-233 enterDone 内才设置 focusField='name'。",
+            "outputs/checkout-dialog.mpx:212-224 closeDialog 先 clearTimers()、entered=false；:229 enterDone 用 enterNotified/entered 双重拦截，:235-239 transitionend 仅在 entered 时进入 enterDone，关闭后到达的旧回调不会重新聚焦。"
+          ],
+          "unverified": [
+            "支付宝/Skyline 上 transitionend 是否稳定派发未真机验证，实际可能走 340ms 兜底定时器。",
+            "聚焦后支付宝键盘是否真正随入场完成上推未验证。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "dialog.keyboard-order",
+          "status": "passed",
+          "evidence": [
+            "outputs/checkout-dialog.mpx:260-266 两个 blur 只在失焦字段仍是当前 focusField 时清空，完全不修改 keyboardOffset，任意 blur 不会清零。",
+            "outputs/checkout-dialog.mpx:272-279 键盘高度只取事件 detail.height；:289-294 offset 仅在 manualAvoidance && opened 时取 keyboardHeight，与 focus/blur 无推导关系。",
+            "序列 focus(B)→blur(A)：:251-266 的守卫使 blur(A) 不清空新焦点；序列 blur(A)→focus(B)：blur 清空 focusField 但 offset 保持；高度事件早于 focus 或切换时缺失都不改变 offset（:272-279），无自动/手动叠加（:109-111 manualAvoidance 仅在 ali+iOS，且该端 adjustPosition=false）。",
+            "outputs/checkout-dialog.mpx:215-217 关闭时清零 keyboardHeight 并同步 offset，:290 高度事件为 0 时 offset 归零。"
+          ],
+          "unverified": [
+            "参考 ali/ali-template-reference.md:37 称支付宝 input 不支持 keyboardheightchange；ali+iOS 的手动上推依赖该事件，实际可能永不触发。",
+            "最终 blur 不直接复位，依赖 height=0 事件；若该事件缺失，弹层会保持偏移到关闭（参考 :65 建议 blur 后延迟确认焦点再复位）。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "dialog.window-units",
+          "status": "passed",
+          "evidence": [
+            "outputs/size.js:22-38 resolveDialogSize 使用 windowHeight 作为 maxHeight（:36），safeBottom = screenHeight - safeArea.bottom（:28-30），全程不做 pixelRatio 换算，也不扣导航栏。",
+            "outputs/size.js:26-30 safeArea 为 null 或 bottom 非 number 时 safeBottom=0，不抛错；用样本执行 resolveDialogSize 得 {windowHeight:700,screenHeight:800,safeBottom:20,maxHeight:700} 与 safeArea=null 时 safeBottom=0。",
+            "outputs/size.js:41-43 每次读取最新系统信息，:51-59 用 onWindowResize 订阅并返回 offWindowResize 注销；outputs/checkout-dialog.mpx:168-175 attached 订阅、detached 注销，:281-286 每次变化重算 maxHeight/safeBottom，无旧缓存复用。",
+            "outputs/checkout-dialog.mpx:11 max-height 用 panelMaxHeight、padding-bottom 用 safeBottom，:289-294 键盘高度只收紧面板高度，底部安全区只由 size.js 单点计算。"
+          ],
+          "unverified": [
+            "平台不提供 onWindowResize 时仅回退为不监听（outputs/size.js:52），旋转后的实时刷新未真机验证。",
+            "getSystemInfoSync 而非 getWindowInfo 读取尺寸；参考 ali/ali-api-reference.md:32-36 建议优先窗口接口，字段在支付宝的真实可用性未验证。"
+          ],
+          "blocked_by": []
+        }
+      ],
+      "review_notes": "设备判定、聚焦时机、键盘时序与尺寸计算基本成立；主要缺口是支付宝端未按参考用 disable-scroll 仅锁蒙层，背景锁滚动缺失，仅靠 catchtouchmove 兜底。"
+    },
+    {
+      "eval_id": 4,
+      "title": "登录适配、任务句柄与请求取消",
+      "group": "mpx",
+      "expectations": [
+        {
+          "id": "api.host-login",
+          "status": "passed",
+          "evidence": [
+            "outputs/api.js:19-22 定义 SESSION_PATHS = { wx: '/session/wx', ali: '/session/ali' }，两条兑换端点分离。",
+            "outputs/api.js:83-84 把 wx/ali 的 getSession 分别绑定 createHostSession(SESSION_PATHS.wx) 与 createHostSession(SESSION_PATHS.ali)；outputs/api.js:66-75 中该工厂先用 mpx.login() 取 code，再以该 code POST 到本分组专属 path，返回 { token: readToken(res) }，支付宝 code 在结构上到不了 /session/wx，反之亦然。",
+            "outputs/api.js:85-88 ios/android/harmony/web 各自注册 getSession: () => authHost.signIn()，这三端/Web 的会话不经过 mpx.login；outputs/auth-host.js:30-51 的 stub signIn() 返回 Promise<{token}>、取消时 reject AuthCancelError，outputs/auth-host.js:53-54 导出可替换的 authHost 实例。",
+            "outputs/account.mpx:184-202 登录入口对四端统一调用 getSession()（outputs/api.js:94-114 → outputs/api.js:105 mpx.getSession()），页面未按平台删除 RN/Web 登录入口（outputs/account.mpx:13-18、204-206）。",
+            "outputs/api.js:78-90 只注册 custom getSession，未注册 custom login，未把宿主 token 伪装成 code；token 的后端交换协议在 outputs/api.js:3-9、57-63 与 outputs/auth-host.js:3-9 中写明。"
+          ],
+          "unverified": [
+            "未在 wx/ali 真机、RN ios/android/harmony 容器与浏览器中实际点击登录；仅按源码与参考契约逐端追踪。",
+            "支付宝 mpx.login() 实际返回授权码的运行时行为未实测（契约见 ali/ali-api-reference.md:68）。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "api.custom-contract",
+          "status": "passed",
+          "evidence": [
+            "outputs/api.js:80-90 一次 mpx.use(apiProxy, { usePromise: true, custom: {...} }) 中按实际目标逐个注册 wx、ali、ios、android、harmony、web 六组，未只注册 custom.ios，也未假定 android/harmony 继承 ios（参考 base/api-reference.md:206 明确没有统一 rn 分组且不继承）。",
+            "outputs/api.js:94-97 页面调用的 getSession 走 requestSession，outputs/api.js:105 调用的是安装后的 mpx.getSession()，不是具名导入的代理函数；outputs/account.mpx:103、189 也经该导出调用。",
+            "Promise 契约显式：wx/ali 实现是 async function（outputs/api.js:67），返回 {token}；ios/android/harmony/web 的实现返回 authHost.signIn()，stub 为 new Promise（outputs/auth-host.js:34-46），未依赖 usePromise 自动包装 custom（参考 base/api-reference.md:209）。",
+            "不存在的具名导出未被使用：outputs/api.js:11-14 只用 @mpxjs/core、@mpxjs/api-proxy、@mpxjs/fetch 默认导出；outputs/account.mpx:102-105 的具名导入均能在 outputs/api.js:41/94/99/151/183、outputs/auth-host.js:21/54、outputs/request-stub.js:21 找到对应导出。"
+          ],
+          "unverified": [
+            "api-proxy 真实实现中的 custom 安装/合并与 __mpx_mode__ 取值未在工程内实测，依赖 base/api-reference.md:206-210 的契约。",
+            "若宿主工程 app 侧另有 mpx.use(apiProxy, { custom }) 安装，可能整体覆盖本处 custom；该集成风险未在真实工程验证。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "api.request-task",
+          "status": "passed",
+          "evidence": [
+            "outputs/api.js:127-134 先同步拿到请求 Promise（127-132），随即在 await 之前把任务句柄存为 requestPromise.__returned（outputs/api.js:133），await 得到的只作为响应用于 readSearchResult（outputs/api.js:134），未对响应调用 abort。",
+            "outputs/api.js:118-122 abortTask 调用 state.task.abort()（RequestTask.abort），任务句柄来源与 api-proxy 契约一致（base/api-reference.md:234、1454）。",
+            "取消链路：outputs/account.mpx:270-275 点击取消 → outputs/api.js:159-164 state.canceled=true 后 abandon → outputs/api.js:118-122 abort；若搜索仍停在 getSession 阶段，outputs/api.js:126 在发请求前直接返回，不会出现无句柄却已发请求的情况。",
+            "未出现 fail_when 中的两种错误：不存在 await 后对响应 abort，也不存在等请求完成才保存句柄（句柄在请求发起后同步保存）。"
+          ],
+          "unverified": [
+            "真实 api-proxy 的 promise.__returned 同步可用的实现细节未实测，依据 base/api-reference.md:234。",
+            "未在真实传输（非 stub）下点击取消验证 abort 时序。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "api.stale-result",
+          "status": "passed",
+          "evidence": [
+            "outputs/account.mpx:217-255 每次搜索先 ++searchSeq 得到闭包身份 id（218），结果与错误回写都要求 destroyed 为假且 id === searchSeq（232-235、241-244）；loading 收尾同样只在 id === searchSeq 时执行（250-253），被取代的 A 无法关闭 B 的 loading。",
+            "outputs/api.js:151-158 新查询发起时先 abandon 旧任务（清 activeSearch 身份并 abort），outputs/api.js:159-164 cancel 先置 state.canceled=true 再废弃身份并 abort，符合“取消时先废弃身份”。",
+            "取消后的晚到响应：outputs/api.js:168-174 在 state.canceled 为真时一律收敛为 canceledResult，outputs/account.mpx:228-231 只记日志、不写结果/错误；outputs/account.mpx:270-275 取消时立即关 loading。",
+            "乱序回放条件可复现：outputs/account.mpx:358-367 使用 abortMode: 'ignore' 的脚本传输，A 慢 900ms、B 快 150ms（outputs/request-stub.js:75-79），A 晚到被身份守卫丢弃；离开页面 outputs/account.mpx:421-426 置 destroyed 并取消在途搜索。"
+          ],
+          "unverified": [
+            "未构建页面做实际回放；结论来自源码静态追踪与 stub 延迟设置，未在真机/浏览器执行。",
+            "极端并发（同一 tick 内连续发起多次搜索）下的微任务顺序未实测。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "network.cancel-token",
+          "status": "passed",
+          "evidence": [
+            "outputs/api.js:218 每次详情请求 new xfetch.CancelToken()，outputs/api.js:234 传的是 cancelToken.token（Promise），不是 CancelToken 实例，符合 base/network-reference.md:45、86。",
+            "取消通过 exec 触发：outputs/api.js:220-226 task.cancel 置 state.canceled 后调用 cancelToken.exec('cancel-detail')，全目录无 token.abort() 调用。",
+            "catch 区分取消与普通错误：outputs/api.js:236-242 在 state.canceled 为真时返回 canceledResult，否则 rethrow 真实错误；outputs/account.mpx:300-307 把非取消错误写入 detailError 展示，未吞掉失败。",
+            "stub 侧与真实契约一致：outputs/request-stub.js:136-148 的 token 为 Promise、exec(reason) 以带 __CANCEL__ 的原因 reject；outputs/request-stub.js:160-164 用该 token 取消底层请求。",
+            "偏差记录：outputs 全目录检索无 xfetch.isCancel 调用（取消识别依赖本地 state.canceled，见 outputs/api.js:219、238-241），与 base/network-reference.md:86 的推荐写法不同；本题搜索/详情两条取消路径均先置 state.canceled，行为等价。"
+          ],
+          "unverified": [
+            "未使用 xfetch.isCancel；由本客户端之外的来源触发 __CANCEL__ 取消（如传输层统一取消）会进入真实错误分支，该输入未实现也未验证。",
+            "真实 xfetch 取消拒绝的结构与时序未实测（outputs/request-stub.js 只模拟契约）。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "network.interceptor-dispose",
+          "status": "passed",
+          "evidence": [
+            "outputs/api.js:197-203 响应拦截器在 res.data.code !== 0 时 Promise.reject(new ApiError(...))，正常响应原样 return res，保留成功透传/业务错误语义（与 base/network-reference.md:74-79 一致）。",
+            "outputs/api.js:197 保存 use() 的返回值 ejectResponse，outputs/api.js:190-194 与 256-263 只调用该函数释放本次注册；全目录无 interceptors.response.eject(id)（grep 已确认），不会误删其他订阅。",
+            "连续进入离开不累积：outputs/api.js:188-196 attach 对同一实例幂等（190 命中即返回），换实例时先 eject 旧注册（191-194）；outputs/account.mpx:413-426 在 onShow/onHide/onUnmounted 调 attach/detach，两次进出后注册表为空。",
+            "其他订阅仍在的依据：outputs/request-stub.js:171-183 的 use 返回按条目 splice 的卸载闭包（只移除自身），outputs/request-stub.js:150-152 每次 fetch 依次执行现存拦截器；真实 xfetch 同契约见 base/network-reference.md:61、63。"
+          ],
+          "unverified": [
+            "真实 @mpxjs/fetch 的 use 卸载行为未实测，依据 base/network-reference.md:61；离屏/多页面实例并存场景未跑真机。",
+            "“其他订阅仍在”只在 stub 中做了结构性验证，未在真实实例上断言。"
+          ],
+          "blocked_by": []
+        }
+      ],
+      "review_notes": "六条断言均通过：登录按端分流、custom 注册、__returned 取句柄、身份守卫丢弃晚到、token+exec 取消、use 卸载拦截器；详情取消用本地标志而非 isCancel，路径内等价。"
+    },
+    {
+      "eval_id": 4,
+      "title": "登录适配、任务句柄与请求取消",
+      "group": "noskill",
+      "expectations": [
+        {
+          "id": "api.host-login",
+          "status": "passed",
+          "evidence": [
+            "outputs/api.js:22-25 定义 SESSION_ENDPOINTS，仅 wx→/session/wx、ali→/session/ali。",
+            "outputs/api.js:285-306 authenticateWithHostCode 取 mpx.login() 的 code 后按传入 platform 拼 SESSION_ENDPOINTS[platform] 兑换 token，没有把 ali 分支指向 /session/wx。",
+            "outputs/api.js:323-337 按平台分流：mini（wx/ali）走宿主 code 兑换，RN ios/android/harmony 与 web 走 authenticateWithSession，未知平台明确 reject，未让 RN/Web 调 mpx.login。",
+            "outputs/api.js:144-166、168-176 为 ios/android/harmony/web 分别注册 custom.getSession，映射 authHost.signIn() 并归一为 {token}。",
+            "outputs/account.mpx:334-358 页面登录入口统一调用 this._api.signIn()，按平台展示结果；outputs/account.mpx:163-174 的提示与实际分流一致。",
+            "skill-snapshots/mpx/references/ali/ali-api-reference.md:68 说明 ali code 须对接支付宝登录后端；rn/rn-api-reference.md:447 与 web/web-api-reference.md:458 说明 RN/Web 内置 login 不支持，outputs 未依赖它。"
+          ],
+          "unverified": [
+            "未在 wx/ali/RN/Web 真实工程构建或真机运行，mpx.env/__mpx_mode__ 在实际产物中确为 wx/ali/ios/android/harmony/web 未执行验证。",
+            "真实 /session/wx、/session/ali 后端与授权码兑换未联调。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "api.custom-contract",
+          "status": "passed",
+          "evidence": [
+            "outputs/api.js:168-176 通过 mpx.use(apiProxy, { usePromise: true, custom: ... }) 分别注册 ios、android、harmony、web 四个目标，未只注册 ios 而假定其他端继承。",
+            "outputs/api.js:144-166 sessionFromHost 始终 return promise，成功值为 {token: string}；对 api-proxy 可能传入的 success/fail 回调做了兼容，但不依赖 usePromise 自动包装。",
+            "outputs/api.js:308-321 authenticateWithSession 通过安装后的 mpx.getSession() 调用并检查返回 token，wx/ali 则由 outputs/api.js:285-306 的宿主 code 兑换得到可用 session。",
+            "skill-snapshots/mpx/references/base/api-reference.md:206 明确 custom 无统一 rn 分组、不会自动继承 ios；:209 明确 custom 不自动应用 usePromise；:210 说明必须经安装后的 mpx 调用，outputs 的实现与之一致。"
+          ],
+          "unverified": [
+            "未在真实工程验证 api-proxy 对各 custom 平台键的实际挂载形态（api.js 已按契约按实际目标注册）。",
+            "未验证 RN/Web 宿主 auth-host 替换真实封装后的行为，仅静态审阅了可替换入口 outputs/auth-host.js:76-88。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "api.request-task",
+          "status": "failed",
+          "evidence": [
+            "outputs/api.js:182-192 defaultSearchTransport 先 const task = mpx.request(config)，随后把 Promise.resolve(task) 作为 promise，并在 abort 中判断 task.abort；从未读取 Promise.__returned。",
+            "outputs/api.js:168-176 已启用 usePromise:true，按 skill-snapshots/mpx/references/base/api-reference.md:234、:1436，取消句柄只存在于返回 Promise 的 __returned，Promise 本身没有 abort。",
+            "outputs/account.mpx:419、outputs/account.mpx:453-466 取消按钮最终调用的正是上述 task.abort，真实 api-proxy 链路上无法中断请求；只有 outputs/request-stub.js:49-63 的本地 stub 任务带 abort，掩蔽了该缺陷。",
+            "未采用等效的显式 usePromise:false 回调方案（api.js 未出现 __returned 或 usePromise:false）。"
+          ],
+          "unverified": [
+            "未运行真实 api-proxy 请求验证取消是否实际发出；但按参考契约，Promise 上不存在 abort，取句柄方式已判失败。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "api.stale-result",
+          "status": "passed",
+          "evidence": [
+            "outputs/account.mpx:394-398 发起新查询时先 ++_searchSeq 使旧身份失效，再 abort 旧任务。",
+            "outputs/account.mpx:421-450 成功与失败回调都先检查 seq !== this._searchSeq，过期响应只写 trace 后 return，不写 searchResults/searchLoading/searchError。",
+            "outputs/account.mpx:453-466 cancelSearch 先自增 _searchSeq 再 abort，随后关闭 loading 并清空错误；outputs/account.mpx:546-554 详情同样只在身份匹配时展示真实错误，取消错误被忽略。",
+            "outputs/account.mpx:232-247、316-332 onHide/onUnload 通过 _cancelInFlight 自增序号并 abort，晚到响应无法再写 UI。",
+            "outputs/request-stub.js:101-108 out-of-order 场景让 A(delay 420, ignoreAbort) 晚于 B(delay 90) 到达，用于验证序号守卫。"
+          ],
+          "unverified": [
+            "未在页面运行时回放 A→B、取消后晚到；结论基于源码状态机静态审查（账号页本身可触发该场景）。",
+            "真实搜索链路的 abort 无效（见 api.request-task），但本断言的旧响应覆盖由序号守卫独立阻止。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "network.cancel-token",
+          "status": "failed",
+          "evidence": [
+            "outputs/api.js:249-262 详情取消采用 const source = detailFetch.CancelToken.source()，传 source.token，取消调用 source.cancel(reason)。",
+            "skill-snapshots/mpx/references/base/network-reference.md:86、:100 规定的契约是 new CancelToken()/new xfetch.CancelToken() 得到令牌实例，传 .token，并通过 token.exec(reason) 取消；参考文献未提供 CancelToken.source()/source.cancel() 入口，outputs 全程未调用 exec。",
+            "outputs/api.js:129-138 通过 detailFetch.isCancel(error) 区分取消与普通错误，outputs/account.mpx:546-554 取消不展示错误、其他错误展示 error.message，这部分符合要求。",
+            "outputs/api.js:253-256 使用 detailFetch.get(...) 而非参考中唯一记载的 detailFetch.fetch(config)（skill-snapshots/mpx/references/base/network-reference.md:18、:26），该取消失效风险未被任何静态验证覆盖。"
+          ],
+          "unverified": [
+            "未在真实 @mpxjs/fetch 实例上验证 CancelToken.source()/source.cancel()/detailFetch.get() 是否存在；按参考契约未使用 exec，故判失败。",
+            "未实际触发取消后晚到响应观察 catch 分支。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "network.interceptor-dispose",
+          "status": "failed",
+          "evidence": [
+            "outputs/api.js:229-242 attachDetailInterceptor 先正确实现透传与业务 code 非 0 reject，并 return detailFetch.interceptors.response.use(...) 的返回值；按 skill-snapshots/mpx/references/base/network-reference.md:61，该返回值就是卸载函数。",
+            "outputs/api.js:244-247 detachDetailInterceptor 却调用 detailFetch.interceptors.response.eject(interceptorId)，把 use 返回的卸载函数当作 eject id；参考文档未提供 interceptors.response.eject。",
+            "outputs/account.mpx:473-491 将 use 返回值存为 _detailInterceptorId，关闭/onHide/onUnload 时交给 detachDetailInterceptor，实际未执行卸载函数；连续进入离开会累积拦截器，且可能因 eject 不存在抛错。",
+            "verification.md:169-173 自述仍沿用 eject(id)，与题目要求修复的旧实现（scenario.md:20）相同，不能作为通过依据。"
+          ],
+          "unverified": [
+            "未在真实 xfetch 实例运行 enter/leave 两次验证拦截器数量；但源码未调用 use 返回的卸载函数，释放语义不成立。",
+            "未验证拦截器在真实 xfetch 响应上 reject/透传的运行时表现。"
+          ],
+          "blocked_by": []
+        }
+      ],
+      "review_notes": "登录分流与乱序序号守卫正确；真实搜索取消未取 __returned 句柄，xfetch 取消未走 exec，且拦截器仍以 eject 释放，三处链路不合契约。"
+    },
+    {
+      "eval_id": 5,
+      "title": "响应式动态组件与首次渲染能力",
+      "group": "mpx",
+      "expectations": [
+        {
+          "id": "script.props-live",
+          "status": "passed",
+          "evidence": [
+            "outputs/detail-switcher.mpx:52-57 defineProps 声明 title/disabled/activeKind/coverUrl，默认值用 value",
+            "outputs/detail-switcher.mpx:59 `const { title, disabled, activeKind, coverUrl } = toRefs(props)`，未普通解构，title 保持与 props 联动",
+            "outputs/detail-switcher.mpx:11 模板 `{{title}}` 直接消费 toRefs 产生的 title ref；17 行同一 title 再透传给动态卡片",
+            "outputs/demo.mpx:98-102 renameTitle 将 title 由『详情标题 1』改为『详情标题 2』，demo.mpx:38 以 title=\"{{title}}\" 传入组件",
+            "outputs/basic-card.mpx:16、outputs/vip-card.mpx:16 子组件同样用 toRefs(props) 取 title"
+          ],
+          "unverified": [
+            "未在 wx/ali/RN/web 运行验证文本实际刷新（本目录无构建工程）",
+            "未验证 demo.mpx:40-41 的 active-kind/cover-url 连字符属性到 camelCase props 的编译映射"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "script.setup-exposure",
+          "status": "passed",
+          "evidence": [
+            "outputs/detail-switcher.mpx:130-142 defineExpose 显式列出 title/disabled/activeKind/count/expanded/configReady/actionStyle/coverStyle/foldStyle/handleAction/toggleFold",
+            "outputs/detail-switcher.mpx:11-13、17、23-24、29、35、41、44 模板使用的标识符全部在 defineExpose 中；coverUrl 仅经 coverStyle（71-76 行）消费，无需单独暴露",
+            "outputs/basic-card.mpx:18、outputs/vip-card.mpx:18 子组件 defineExpose({ title }) 覆盖模板 4 行的 {{title}}",
+            "outputs/demo.mpx:172-188 页面脚本暴露模板 9-12、16-33、36-53 行所用状态与事件方法"
+          ],
+          "unverified": [
+            "未编译验证 Mpx 对 defineExpose 的解析产物"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "script.lifecycle-registration",
+          "status": "passed",
+          "evidence": [
+            "outputs/detail-switcher.mpx:114-120 onMounted 在 setup 顶层同步注册，异步配置 loadDemoConfig（105-112）在回调内部启动",
+            "outputs/detail-switcher.mpx:122-128 onUnmounted 同样同步注册，clearTimeout 并置空本实例 configTimer",
+            "outputs/detail-switcher.mpx:103-112 定时器为 setup 内实例级变量，卸载清理后 Promise 不再 resolve，116-119 的 configReady 写入不会发生",
+            "outputs/demo.mpx:164-170 页面侧 onMounted/onUnmounted 亦为同步注册并清理 timelineTimers（136-139）"
+          ],
+          "unverified": [
+            "未运行验证卸载后控制台日志与无残留定时任务的实际行为"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "template.dynamic-range",
+          "status": "passed",
+          "evidence": [
+            "outputs/detail-switcher.mpx:17 `<component is=\"{{activeKind}}\" range=\"basic-card,vip-card\" title=\"{{title}}\" />`，候选恰为两个卡片且透传 title",
+            "outputs/detail-switcher.mpx:242-249 usingComponents 注册 basic-card/vip-card，与 range 名称逐字一致",
+            "outputs/detail-switcher.mpx:62、91-92 count 定义在卡片父层 detail-switcher，切换只重建 component 节点，计数不重置",
+            "outputs/basic-card.mpx:4、outputs/vip-card.mpx:4 两个候选均为自定义组件而非 view/text"
+          ],
+          "unverified": [
+            "未实机执行两次切换验证 title 与 count 的运行时表现",
+            "未编译确认 <component> 上的 title 属性在 web/RN 产物中完整透传"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "template.event-chain",
+          "status": "passed",
+          "evidence": [
+            "outputs/detail-switcher.mpx:25 bindtap=\"handleAction\" 直接绑定方法，模板中无任何 data-* 传参",
+            "outputs/detail-switcher.mpx:86-93 handler 先判 disabled 直接 return（87-90），否则 count 自增（91）并 triggerEvent('change', { count, kind: activeKind.value })（92）",
+            "outputs/detail-switcher.mpx:23 disabled=\"{{disabled}}\" 同步禁用宿主按钮",
+            "outputs/demo.mpx:42 bindchange=\"handleChange\"，92-96 从 e.detail 取 count/kind 并展示（77-82、45-49）",
+            "outputs/detail-switcher.mpx:92 载荷字段名为 count/kind，与 demo.mpx:81、95 的消费字段一致"
+          ],
+          "unverified": [
+            "未在四端运行验证点击两次 count=2、禁用态无事件及 detail 传递"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "rn.background-priming",
+          "status": "passed",
+          "evidence": [
+            "outputs/detail-switcher.mpx:3-8 背景节点为真实 view，首帧即带 key@ios|android|harmony=\"ds-cover\"（5 行）与 enable-background@ios|android|harmony=\"{{true}}\"（6 行），不随 coverUrl 条件化",
+            "outputs/detail-switcher.mpx:7 背景样式来自 wx:style=\"{{coverStyle}}\"；71-76 coverStyle 在空值时输出 backgroundImage:'none'，非空时输出 url(...)",
+            "outputs/detail-switcher.mpx:5-6 两个属性均用属性级条件编译限定 ios|android|harmony，wx/ali/web 产物不含该属性；其余节点（10、16、20、33、40、44 行）均未声明",
+            "outputs/demo.mpx:122-129 通过 setCover 切换 coverUrl，首次为空串、后续为远程 PNG（62 行）"
+          ],
+          "unverified": [
+            "未在 RN ios/android/harmony 编译或真机验证背景首次出现与 key 生效",
+            "未验证远程图片域名可达与 fast-image 依赖"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "rn.animation-priming",
+          "status": "passed",
+          "evidence": [
+            "outputs/detail-switcher.mpx:33-38 过渡节点首帧即声明 enable-animation@ios|android|harmony=\"transition\"（35 行），且仅此节点声明",
+            "outputs/detail-switcher.mpx:78-84 foldStyle 首帧只含 opacity，transitionOn 为真后才追加 transition:'opacity 0.3s ease'（80-82）",
+            "outputs/detail-switcher.mpx:95-101 toggleFold 首次展开置 transitionOn=true，折叠不撤销，保证同一节点后续两向过渡",
+            "outputs/detail-switcher.mpx:35 属性限定 ios|android|harmony，其他端不接收 RN 专有属性"
+          ],
+          "unverified": [
+            "未在 RN 三端运行验证展开/折叠的实际过渡效果"
+          ],
+          "blocked_by": []
+        }
+      ],
+      "review_notes": "7 条均通过：toRefs 保 title 响应、defineExpose 全覆盖、生命周期同步注册并卸载清定时器、range 与注册一致且计数留父层、事件链无 dataset 且 disabled 拦截、RN 能力首帧预声明。"
+    },
+    {
+      "eval_id": 5,
+      "title": "响应式动态组件与首次渲染能力",
+      "group": "noskill",
+      "expectations": [
+        {
+          "id": "script.props-live",
+          "status": "passed",
+          "evidence": [
+            "detail-switcher.mpx:45-62 用 defineProps 声明 title，脚本未解构 props；detail-switcher.mpx:4 模板直接使用 prop 名 title；detail-switcher.mpx:30 将 title 透传给动态组件",
+            "demo.mpx:67、80-83 父级用 ref 修改 title，但 demo.mpx:59-138 全文件无 defineExpose，nextTitle 等 setup 绑定未暴露到实例（base/script-reference.md:385、:407），父级把 title 从 A 改成 B 的链路无法执行"
+          ],
+          "unverified": [
+            "父级改 title 后子组件显示 B 的运行时结果未验证：demo 页面状态与方法未 defineExpose，且 detail-switcher 未被 usingComponents 注册，无法挂载到父级",
+            "detail-switcher.mpx:46-49 等运行时默认值写成 default，而参考用 Mpx 属性默认值 value（base/script-reference.md:396），该写法是否被运行时接受未验证",
+            "按 iteration-2 口径：被上游缺陷遮挡但自身实现正确的断言判 passed，并记 blocked_by"
+          ],
+          "blocked_by": [
+            "script.setup-exposure",
+            "template.dynamic-range"
+          ]
+        },
+        {
+          "id": "script.setup-exposure",
+          "status": "failed",
+          "evidence": [
+            "detail-switcher.mpx:39-135 全文件无 defineExpose；模板使用的 count（detail-switcher.mpx:5）、activeComponent（:11、:30）、configStatus（:12）、coverStyle（:16）、onToggleExpand（:20）、expanded/panelStyle（:21-23）、onAction（:33）均未暴露",
+            "demo.mpx:59-138 全文件无 defineExpose；模板使用的 title/disabled/activeKind/coverUrl/mounted/totalCount/lastDetail（demo.mpx:5-10）与 nextTitle、toggleDisabled、nextKind、runSequence、toggleMounted、onDetailChange（:14-27）均不可达",
+            "basic-card.mpx:12-19、vip-card.mpx:12-19 亦无 defineExpose",
+            "base/script-reference.md:385 明确 script setup 绑定不会自动暴露给模板，:407 要求用 defineExpose 声明模板及实例可访问的绑定"
+          ],
+          "unverified": [
+            "未执行编译/运行；按参考契约，未 defineExpose 的模板绑定不可达"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "script.lifecycle-registration",
+          "status": "passed",
+          "evidence": [
+            "detail-switcher.mpx:117-125 onMounted 在 setup 顶层同步注册，异步 loadMockConfig 的 then 回调内才写 configStatus",
+            "detail-switcher.mpx:127-134 onUnmounted 同步注册，置 destroyed 并 clearTimeout",
+            "detail-switcher.mpx:105-115 configTimer 为实例级变量；detail-switcher.mpx:121 `if (destroyed) return` 阻止卸载后写已销毁实例",
+            "base/script-reference.md:94、:364 要求组合式钩子在 setup 执行期同步注册，异步逻辑放在已注册回调内"
+          ],
+          "unverified": [
+            "未在运行时执行“配置返回前卸载”的时序验证；仅静态核对同步注册、定时器清理与 destroyed 保护"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "template.dynamic-range",
+          "status": "failed",
+          "evidence": [
+            "detail-switcher.mpx:41-42 仅 import 两个卡片，detail-switcher.mpx:1-240 全文件无 `<script type=\"application/json\">`/usingComponents；base/json-reference.md:25、base/script-reference.md:412 明确 import .mpx 不能替代 JSON 注册",
+            "detail-switcher.mpx:30 `<component is=\"{{ activeComponent }}\">` 未写 range；base/template-reference.md:87 要求候选组件在 usingComponents 注册并用 range 限定实际候选",
+            "demo.mpx:33-40 使用 detail-switcher，但 demo.mpx:44-57 页面 JSON 无 usingComponents，父级也无法挂载子组件",
+            "父层计数 demo.mpx:72、113-118 用独立 totalCount 按 change 累计，源码层面不随切换重置（但无法运行验证）"
+          ],
+          "unverified": [
+            "未运行验证两次切换后的 title 与父层 count；动态候选没有注册，无法进入渲染与切换"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "template.event-chain",
+          "status": "passed",
+          "evidence": [
+            "detail-switcher.mpx:33 绑定 bindtap=\"onAction\"；detail-switcher.mpx:98-103 处理器先判 props.disabled 提前返回，再 count.value+1 并 emit('change', { count, kind })，未使用 dataset",
+            "demo.mpx:39 绑定 bindchange=\"onDetailChange\"；demo.mpx:113-118 从 e.detail 读取 count/kind 并更新 totalCount，模板到处理器的源码链路符合要求",
+            "但 detail-switcher.mpx:39-135 无 defineExpose，onAction 未暴露；demo.mpx:59-138 无 defineExpose，onDetailChange 未暴露，详见 script.setup-exposure",
+            "detail-switcher.mpx:1-240 无 usingComponents，demo 无法挂载该组件，详见 template.dynamic-range"
+          ],
+          "unverified": [
+            "启用点击两次 count=2、禁用不触发 change、四端传递同一 detail 均未运行验证；事件处理器与父级回调当前不可达",
+            "defineEmits 未出现在参考的 script setup 宏表中（base/script-reference.md:407 附近只列 defineProps/defineExpose/defineOptions/useContext/withDefaults），Mpx 是否支持该宏未验证",
+            "按 iteration-2 口径：被上游缺陷遮挡但自身实现正确的断言判 passed，并记 blocked_by"
+          ],
+          "blocked_by": [
+            "script.setup-exposure",
+            "template.dynamic-range"
+          ]
+        },
+        {
+          "id": "rn.background-priming",
+          "status": "failed",
+          "evidence": [
+            "detail-switcher.mpx:16 背景 view 只有 class 与 style=\"{{ coverStyle }}\"，没有 enable-background 属性，也没有 key",
+            "detail-switcher.mpx:79-82 coverStyle 只输出 background-image/background-color 字符串，未在 RN 端条件开启背景能力",
+            "rn/rn-template-reference.md:141 要求首次渲染确定并显式开启 enable-background，开启时提供唯一 key；rn/rn-style-practice.md:290 同样要求",
+            "断言 fail_when 的“没有有效 key”成立：该背景节点无任何 key"
+          ],
+          "unverified": [
+            "未在 RN 运行时验证初始空 coverUrl→非空后背景出现；rn/rn-style-reference.md:505 的样式自动检测是否能替代显式 enable-background/key 未验证，但显式开关与唯一 key 均缺失"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "rn.animation-priming",
+          "status": "failed",
+          "evidence": [
+            "detail-switcher.mpx:23 过渡 view 无 enable-animation；detail-switcher.mpx:1-240 全文件无 enable-animation",
+            "detail-switcher.mpx:85-88 panelStyle 在 isRN 时直接排除 transition，RN 端首次及后续都没有 transition 样式，更未预声明动画类型",
+            "rn/rn-template-reference.md:163、rn/rn-style-reference.md:466 要求首次无 transition、后续动态添加时从首次渲染起 enable-animation=\"transition\"；当前 RN 端连 transition 都不存在",
+            "detail-switcher.mpx:90-95 首次展开只置 hasTransition，非 RN 端首帧后才追加 transition，属 fail_when 的“首次展开才开启动画能力”"
+          ],
+          "unverified": [
+            "未在 RN 运行时验证展开/折叠过渡；按参考契约，RN 端没有任何动画能力"
+          ],
+          "blocked_by": []
+        }
+      ],
+      "review_notes": "缺 defineExpose、usingComponents/range 与 RN 两个 enable 属性；props 未解构、生命周期与事件源码逻辑正确，但整体不可运行。 口径对齐 iteration-2：script.props-live / template.event-chain 由 pending 改判 passed，并保留 blocked_by（setup-exposure、dynamic-range）。"
+    },
+    {
+      "eval_id": 6,
+      "title": "路由参数、部署与异步分包",
+      "group": "mpx",
+      "expectations": [
+        {
+          "id": "routing.decoded-query",
+          "status": "passed",
+          "evidence": [
+            "outputs/detail.mpx:24-31：onLoad 第二参数 decodedQuery 直接取 title，赋给 this.title 并调用 mpx.setNavigationBarTitle，未对 rawQuery 或 decodedQuery 调用 decodeURIComponent",
+            "outputs/detail.mpx:9：模板 {{title}} 直接展示该字面值（%252F 经 Mpx 单次解码为 %2F）",
+            "outputs/detail.mpx:27：源码注释明确禁止二次解码，全文件无任何实际 decode 调用（grep decodeURIComponent 仅命中注释）"
+          ],
+          "unverified": [
+            "未实际编译/运行，未在 wx/ali/RN/Web 各端回放 title=%252F 的 onLoad 入参；decodedQuery 注入依赖 Mpx 运行时，本次仅按参考契约做静态核对",
+            "未验证 setNavigationBarTitle 在各目标的时序与实际生效结果"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "routing.web-deploy",
+          "status": "passed",
+          "evidence": [
+            "outputs/runtime-config.js:6-16：仅在 __mpx_mode__==='web' 的运行时 Mpx.config.webConfig 上合并 routeConfig，设置 mode:'history' 与 base:'/catalog/'，未设置 routeConfig.routes",
+            "outputs/plugin-options.js:9-15：编译期 webConfig 仅保留 el，明确不写 routeConfig，避免“只配插件 routeConfig”的失效路径",
+            "outputs/plugin-options.js:27-30：webpack.output.publicPath 指向 https://cdn.example.test/assets/（CDN，与路由 base 分离）",
+            "outputs/app-json.js:11-13：pages 注册 './pages/index/index'，entryPagePath 为已注册路径 'pages/index/index'，无前导 /、无扩展名，未把 /catalog/ 写入 entryPagePath",
+            "outputs/verification.md:67-74：作为部署说明交付的 nginx try_files /catalog/index.html 回退片段，说明 history 深层页面/刷新回退 HTML"
+          ],
+          "unverified": [
+            "未执行 Web 构建与真实服务器部署；runtime-config 生效依赖 app.mpx 在 createApp 前 import（app.mpx 不在交付清单内，仅由 outputs/runtime-config.js:4 的注释说明接线）",
+            "直达 /catalog/detail 依赖分包入口 pages 的 {src,path:'detail'} 别名，该配套改动仅在 outputs/app-json.js:45-48 与 verification.md 中说明，未作为文件交付",
+            "nginx 回退与 CDN publicPath 未在真实环境验证，entryPagePath 与 base 的实际拼合仅静态核对"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "routing.web-titlebar",
+          "status": "passed",
+          "evidence": [
+            "outputs/runtime-config.js:9-11：Web 运行时 Mpx.config.webConfig 显式设置 enableTitleBar: true（严格布尔值，且在 createApp 前的配置模块中）",
+            "outputs/detail.mpx:55-58：Web（及支付宝）分支设置 navigationStyle:'default'，未隐藏内建标题栏；wx 的 navigationStyle:'custom' 仅出现在 __mpx_mode__==='wx' 分支（:44-50），不会套到 Web",
+            "outputs/detail.mpx:31：onLoad 中调用 mpx.setNavigationBarTitle({ title })，结合参考 web-config-reference.md:107 可动态更新当前页内建标题栏",
+            "outputs/detail.mpx:38：页面 JSON 提供 navigationBarTitleText:'详情' 作为初始标题"
+          ],
+          "unverified": [
+            "未在浏览器中验证内建标题栏渲染、动态标题更新时序与安全区布局",
+            "enableTitleBar 是否在 createApp 前生效取决于 app.mpx 的引入顺序，app.mpx 未交付"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "subpackage.load-driver",
+          "status": "passed",
+          "evidence": [
+            "outputs/plugin-options.js:16-21：编译期 rnConfig.supportSubpackage: true（另有 asyncCommonSubpackage: true）",
+            "outputs/bundle-host.js:59-69：安装运行时 loadChunkAsync/downloadChunkAsync；:61-64 的 loadChunkAsync 转入 :44-57 的 load()，:48 调用宿主 host.loadBundle(packageName)，执行完成后 resolve(null)，失败以 'fail'/'timeout' 结束",
+            "outputs/bundle-host.js:21-35：stubHost 的 loadBundle 明确 reject，installBundleHost 提供可替换注入点，未用空 Promise 伪装成功",
+            "outputs/runtime-config.js:19-26：仅 RN 模式安装分包钩子并注册 onLazyLoadPageError 失败监听",
+            "outputs/app-json.js:8-18：仅 wx/ali 的 packages 保留 independent=true；ios/android/harmony/web 为普通 ?root 分包，:5-6 注释明确 RN/Web 不支持独立启动",
+            "outputs/bundle-host.js:14 与 outputs/app-json.js:14-18：bundle 名取分包 root packageDetail，与 packages 声明一致"
+          ],
+          "unverified": [
+            "未注入真实宿主、未执行 RN 构建或真机导航；loadBundle 的真实模块名/bundle 命名与宿主对齐未验证",
+            "未验证 RN 异步页面实际加载路径与 Web 普通分包导航的运行时行为"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "subpackage.prefetch-driver",
+          "status": "passed",
+          "evidence": [
+            "outputs/bundle-host.js:66-68：downloadChunkAsync(packages) 遍历后调用 :37-42 的 preload，preload 只调用宿主 host.downloadBundle，不调用 loadBundle",
+            "outputs/bundle-host.js:44-57：loadBundle 只经 load() 由 loadChunkAsync 使用，预下载与加载执行路径完全分离",
+            "outputs/app-json.js:19-20：源码注释明确 preloadRule 的运行时边界——微信/支付宝按宿主能力执行、RN 走 downloadChunkAsync、Web 不执行该配置",
+            "outputs/app-json.js:21-26：首页 preloadRule（network:'all'，packageDetail）按原配置保留，未因 RN/Web 改造而删除 wx/ali 的预下载声明",
+            "outputs/verification.md:94：明确 Web preloadRule 不生效、进入详情页按普通异步分包加载并正常导航"
+          ],
+          "unverified": [
+            "未构建，未验证微信/支付宝宿主对 preloadRule 的实际执行（尤其别名与独立分包组合）",
+            "Web 端 preloadRule 不生效与正常导航仅按参考契约核对，未在浏览器实测"
+          ],
+          "blocked_by": []
+        }
+      ],
+      "review_notes": "回源核对五条断言：解码、Web history/base+CDN、enableTitleBar、RN 加载与预下载驱动均落实，未发现失败条件；构建与真机未验证。"
+    },
+    {
+      "eval_id": 6,
+      "title": "路由参数、部署与异步分包",
+      "group": "noskill",
+      "expectations": [
+        {
+          "id": "routing.decoded-query",
+          "status": "failed",
+          "evidence": [
+            "outputs/detail.mpx:66-67 `onLoad (query) { const title = readTitle(query) }` 只取 onLoad 的第一个参数；参考 base/script-reference.md:111 明确第一参数是 rawQuery、第二参数才是 Mpx 解码后的 decodedQuery（base/script-reference.md:120 亦要求用第二参数且不要重复解码）。",
+            "outputs/detail.mpx:53-55 `readTitle` 对 query.title 原样返回，全文件无 decodeURIComponent（grep 无 decodedQuery/decode 调用）。按断言 verify 的语义，`?title=%252F` 时 rawQuery.title 为 `%252F`，页面最终标题是 `%252F` 而不是要求的 `%2F`，等价于未使用 decodedQuery。",
+            "outputs/detail.mpx:78-79 标题也直接取该未解码值，说明错误值会同时进入正文与导航标题。"
+          ],
+          "unverified": [
+            "未在真实 wx/ali/RN/Web 宿主上运行 `?title=%252F` 验证 rawQuery 的实际取值（各宿主是否已预解码一次）。",
+            "未构建产物，无法复核 Mpx 路由层对 decodedQuery 的实际解码次数。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "routing.web-deploy",
+          "status": "passed",
+          "evidence": [
+            "运行时 routeConfig：outputs/runtime-config.js:15-18 定义 `{ mode: 'history', base: '/catalog/' }`，:44-45 用 `createWebHistory(routeConfig.base)` 建 router，:67-79 bootstrapWebRouter 复用该配置并在 isReady() 后返回。",
+            "构建 publicPath 指向 CDN：outputs/plugin-options.js:23 `WEB_PUBLIC_PATH = 'https://cdn.example.test/assets/'`，:28 写入 web 分支 output.publicPath，:83 同时写入 webConfig.publicPath。",
+            "深层页面回退 HTML：outputs/plugin-options.js:52-58 devServer `historyApiFallback.rewrites` 把 `^/catalog/` 重写到 `/catalog/index.html`，:13-14 注释说明线上回退由 nginx 负责（参考 web-config-reference.md:98 要求 history 模式服务端回退 HTML）。",
+            "默认页面注册合法：outputs/app-json.js:17 `MAIN_PAGES = ['pages/index/index']`，:83-88 `pages` 与 `entryPagePath` 均为页面路径；base `/catalog/` 未写入 entryPagePath（app-json.js:9-10 注释亦明确）。",
+            "未触发 fail_when：路由表由调用方传入生成结果，空表直接抛错（runtime-config.js:33-37），未手写 routes 覆盖（:44-50 只透传 routes 并加 scrollBehavior 守卫）。"
+          ],
+          "unverified": [
+            "runtime-config.js:71-74 回写的是 `mpx.config.webRouteConfig`，参考 web-config-reference.md:84/86 记载的运行期字段是 `Mpx.config.webConfig.routeConfig`；该字段名不一致，Mpx 内建 router 是否实际采用 history/base 无法由交付物闭环确认。",
+            "交付物未包含 app 入口 createApp 调用，无法确认自建 router 与 Mpx 应用的挂载关系。",
+            "线上 nginx `try_files` 回退只在 verification.md 描述，未在源码中落地；本次不以该自述作为通过依据。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "routing.web-titlebar",
+          "status": "failed",
+          "evidence": [
+            "全目录 grep `enableTitleBar|TitleBar` 无任何命中（仅 verification.md 无相关表述），outputs/plugin-options.js 的 web 分支（:76-85）只写 routeConfig/publicPath，outputs/runtime-config.js 也只写路由配置；参考 web-config-reference.md:104 与 web-json-reference.md:36-44 要求 `Mpx.config.webConfig.enableTitleBar = true`（未设置按 false 处理）才能启用内建标题栏。",
+            "页面侧只依赖继承的 navigationStyle：outputs/app-json.js:23 `navigationStyle: 'default'`、:47-48 web 分支返回 BASE_WINDOW；outputs/detail.mpx:114-122 页面 json 未声明 navigationStyle。",
+            "动态标题只调 API：outputs/detail.mpx:83-85 非 wx 端 `mpx.setNavigationBarTitle({ title: navTitle })`。这正好命中 fail_when「仅调用 setNavigationBarTitle 或仅设 navigationStyle:default 就声称栏已显示」——未启用 enableTitleBar 时该 API 只影响 document.title，内建标题栏不存在。"
+          ],
+          "unverified": [
+            "未构建 Web 产物验证标题栏实际 DOM 是否渲染；但启用开关在源码中完全缺失，无需构建即可判定未启用。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "subpackage.load-driver",
+          "status": "failed",
+          "evidence": [
+            "编译开关缺失：outputs/plugin-options.js:33-40 RN 分支只返回 filename/chunkFilename，:47-50 只设 optimization.runtimeChunk，整个文件无 `rnConfig`/`supportSubpackage`（grep 全目录无命中）；参考 rn-json-reference.md:44、rn-config-reference.md:30 要求编译期 `rnConfig.supportSubpackage`。",
+            "框架加载驱动未接入：outputs/bundle-host.js:152-155 把加载器挂到 `mpxApi.config.subpackageLoader`，:158 挂 `mpxApi.loadSubPackage`，:172 挂 `mpxApi.runPreloadRule`；参考 rn-config-reference.md:158 与 rn-json-reference.md:44 规定的运行时钩子是 `Mpx.config.rnConfig.loadChunkAsync`（宿主下载并执行 chunk），交付物未注册该钩子（grep 无 loadChunkAsync）。",
+            "导航侧未驱动：outputs/bundle-host.js:120-124 的 `ensureRouteBundle` 只在定义处出现，全目录无调用点（grep 仅 outputs/bundle-host.js:120）；`installRNSubpackageBridge` 同样无调用点，因此 Mpx 异步页面加载不会走到 `loadBundle`（bundle-host.js:54-75）。",
+            "部分正确项：outputs/app-json.js:57-64 仅 wx/ali 置 independent，RN/Web 为普通分包，未承诺 RN/Web 独立启动；但「只有分包 JSON 声明 + 自造适配器」不足以让加载成立，命中 fail_when 的实质。"
+          ],
+          "unverified": [
+            "无 RN 构建产物与宿主工程，未验证 `loadBundle('packageDetail')` 与 chunk 文件名（plugin-options.js:36-39）是否真的对应。",
+            "未在真机验证 RN 进入 /packageDetail/pages/detail/detail 的导航链路。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "subpackage.prefetch-driver",
+          "status": "failed",
+          "evidence": [
+            "只下载不执行的宿主方法已实现且未与加载混用：outputs/bundle-host.js:80-100 `downloadBundle` 只调 `requireHost().downloadBundle(name)`，:130-142 `runPreloadRule` 仅用 `downloadBundle`，:120-124 的 `ensureRouteBundle` 才用 `loadBundle`，未出现预下载误调 loadBundle。",
+            "但框架预下载钩子未接入：参考 rn-config-reference.md:159、rn-json-reference.md:22/49/59 要求注册 `Mpx.config.rnConfig.downloadChunkAsync` 由页面命中的 preloadRule 自动触发；outputs/bundle-host.js:172 只把 `runPreloadRule` 挂到自造的 `mpxApi.runPreloadRule`，全目录无 `downloadChunkAsync`/`rnConfig` 命中，且该自造 API 无任何页面调用点，preloadRule 在 RN 上不会被自动触发。",
+            "Web 边界只在源码注释中带过：outputs/app-json.js:67-70 注释写「仅微信原生支持 preloadRule…Web 不做预下载」，:90-91 仅 wx 生成 preloadRule，Web 产物不含该字段（与 web-json-reference.md:22/68 一致），但未以显式配置/断言形式说明「Web preloadRule 不生效」。",
+            "微信原预下载保留：outputs/app-json.js:71-76 为 wx 生成 preloadRule；支付宝未生成（:67-68）。"
+          ],
+          "unverified": [
+            "参考未明确支付宝是否支持 preloadRule，无法判定「支付宝原预下载按实际支持保留」是否完整。",
+            "未验证宿主 downloadBundle 的真机行为与预下载失败告警（bundle-host.js:136-140）。"
+          ],
+          "blocked_by": []
+        }
+      ],
+      "review_notes": "Web 部署（base/publicPath/回退/entryPagePath）源码齐全判通过；页面读 rawQuery 而非 decodedQuery、未启 enableTitleBar、RN 未接 rnConfig 的 loadChunkAsync/downloadChunkAsync，四条判失败。"
+    },
+    {
+      "eval_id": 7,
+      "title": "共享业务的 Web SSR 请求隔离",
+      "group": "mpx",
+      "expectations": [
+        {
+          "id": "ssr.request-pinia",
+          "status": "passed",
+          "evidence": [
+            "outputs/app.mpx:6-12 onAppInit 为同步函数，返回 { appMarker: 'keep-me', pinia: createPinia() }，既有根选项保留且每次都新建 Pinia",
+            "outputs/stores/detail.js:1-6 模块顶层只 import defineStore 并 defineStore，无 createPinia()、无 useDetail(pinia) 单例",
+            "outputs/detail.mpx:20-22 Web 分支显式 useDetail(vm.$pinia)，非 Web 端 useDetail() 复用既有活跃实例，避免 SSR 取错 Pinia",
+            "outputs/detail.mpx:40-44 serverPrefetch 先同步取得本次请求 store 再调用 fetchItem；outputs/stores/detail.js:20-50 action 内部 await 后只读写 this.*，未在 await 后重新解析 active Pinia"
+          ],
+          "unverified": [
+            "未执行真实并发 SSR 渲染（本机无完整业务工程），A/B 请求级 Pinia 隔离为源码静态推断",
+            "未实测具体 @mpxjs/pinia 版本对 onAppInit 返回 pinia 及 this.$pinia 注入的行为"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "ssr.await-prefetch",
+          "status": "passed",
+          "evidence": [
+            "outputs/detail.mpx:40-45 serverPrefetch 直接从 this.$route.query 取 id 并 return resolveDetailStore(this).fetchItem(this.id)，为真实 Promise；outputs/stores/detail.js:20、49-55 为 async action，await 响应后写入 item/loadedId 再 resolve",
+            "outputs/api/detail.js:95-113 fetchDetail 为 async，await request(...) 后返回 { id, title }，未返回 mpx.request 的 RequestTask；outputs/api/detail.js:49-56 本地实现返回 Promise",
+            "outputs/detail.mpx:50-51 SSR 下 onLoad 在设置 id 后提前 return，服务端不重复发起未等待请求",
+            "outputs/detail.mpx:46-52 Web 客户端与 wx/ali/RN 仍走 onLoad 调 fetchItem，客户端加载入口保留",
+            "实测 outputs/api/detail.js：注入 A:80/B:10 后并发调用完成顺序为 [B,A]，两个返回值分别为 详情 A / 详情 B，且返回 Promise（本地探针执行：node 直接 import 该模块）"
+          ],
+          "unverified": [
+            "未做 webpack/SSR 构建与 http 渲染，未实测延迟响应下首屏 HTML 是否等待出标题",
+            "未在微信/支付宝/RN 目标构建中运行 onLoad 加载路径，仅核对条件表达式"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "ssr.browser-import",
+          "status": "passed",
+          "evidence": [
+            "outputs/detail.mpx:15-18 页面顶部只静态 import @mpxjs/core 与 ./stores/detail，没有 analytics 的顶层静态 import",
+            "outputs/detail.mpx:53-62 onReady 先判断 __mpx_mode__ === 'web' 且 typeof window !== 'undefined'，再 import('./analytics.web') 动态加载，服务端不会求值浏览器模块",
+            "outputs/analytics.web.js:1-3、6-11 模块导入阶段不访问 window/document，仅 mountAnalytics 被调用时读取 window.location，并带 typeof window/document 兜底",
+            "outputs/analytics.web.js:18-30 上报使用 window.navigator/sendBeacon 或 window.fetch，全部位于挂载后的调用路径"
+          ],
+          "unverified": [
+            "未验证 wx/ali/RN 构建对 import('./analytics.web') 动态 chunk 的实际产物形态；仅确认运行时前置 mode+window 双判断可阻断执行",
+            "未在浏览器实测挂载后埋点上报"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "ssr.hydration-cache",
+          "status": "passed",
+          "evidence": [
+            "outputs/stores/detail.js:7-18 state 工厂包含 item/loadedId/errorId/error/loading/seq，均为可序列化数据，缓存键为请求 id（loadedId/errorId）",
+            "outputs/stores/detail.js:34 同 id 且已有 item 时直接返回，hydration 命中首屏 A 不重复请求；:35 同 id 已有错误态时复用而不重新请求",
+            "outputs/stores/detail.js:41-44 切换到不同 id 时清空旧 item/loadedId 后发起请求，B 不会被 A 的 loaded 状态抑制",
+            "outputs/stores/detail.js:56-63 失败只写 errorId/error，不写 loadedId，失败不标记已加载",
+            "outputs/detail.mpx:64-66 retry 以 { force: true } 绕过缓存；outputs/stores/detail.js:22、34-35 force 分支生效",
+            "输出侧恢复依赖默认 SSR 入口：outputs/app.mpx:1-14 未声明 onSSRAppCreated，Pinia state 由框架写入 context.state 并在客户端经 __INITIAL_STATE__ 恢复（契约见 skill-snapshots/mpx/references/web/ssr-reference.md:177、188）"
+          ],
+          "unverified": [
+            "未实测浏览器 hydration 后 A 是否零请求、A→B 是否加载 B",
+            "若具体 Mpx Web 版本在同一 path 仅 query 变化时不重新触发页面 onLoad，需补充 $route 监听；本次无运行环境验证该版本行为"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "ssr.dual-build",
+          "status": "passed",
+          "evidence": [
+            "outputs/ssr-build.js:42-50 client 配置 target 'web'、entry { app: appEntry }、输出 dist/client、挂 VueSSRClientPlugin；outputs/ssr-build.js:52-67 server 配置 target 'node'、同一 entry、libraryTarget 'commonjs2'、输出 dist/server、splitChunks/runtimeChunk 关闭、挂 VueSSRServerPlugin",
+            "outputs/ssr-build.js:12-17 createSSRWebConfig 仅设置 useSSR: true 与 el '#app'，用于客户端等待异步路由就绪，服务端产物由独立 server 构建生成",
+            "outputs/server.js:10-11 同时读取 dist/server/vue-ssr-server-bundle.json 与 dist/client/vue-ssr-client-manifest.json，bundle/manifest 配套",
+            "outputs/server.js:13-19 HTML 模板含 <!--vue-ssr-outlet-->，由 renderer 注入资源与状态",
+            "outputs/server.js:86-94 复用同一 createBundleRenderer（runInNewContext: false），outputs/server.js:104 每个 HTTP 请求新建 { url: req.originalUrl } context，不复用可变 context",
+            "outputs/ssr-build.js:5、45、55 服务端与客户端使用同一 appEntry（app.mpx），未另写 Web 专属页面"
+          ],
+          "unverified": [
+            "未执行 webpack server/client 双端构建，vue-server-renderer 插件版本兼容与 bundle/manifest 实际产出未实测",
+            "交付目录 app.mpx:24-26 将 detail 注册为主包页面以便独立评审，异步分包注册未在本目录复现，useSSR 的实际路由等待依赖真实工程分包配置",
+            "createSSRConfigs 的用法示例（outputs/ssr-build.js:77-83）未显式展示 createSSRWebConfig 的接入，需按 :7-10 的说明在现有 MpxWebpackPlugin 配置中包装 webConfig"
+          ],
+          "blocked_by": []
+        }
+      ],
+      "review_notes": "五项断言均从源码取证通过：请求级 Pinia、serverPrefetch、动态埋点、按 id 缓存与失败重试、双端构建与逐请求 context 符合契约；未构建运行，风险见 unverified。"
+    },
+    {
+      "eval_id": 7,
+      "title": "共享业务的 Web SSR 请求隔离",
+      "group": "noskill",
+      "expectations": [
+        {
+          "id": "ssr.request-pinia",
+          "status": "failed",
+          "evidence": [
+            "outputs/app.mpx:9-13 在同步 onAppInit 内调用 createDetailPinia()，但 outputs/app.mpx:25 仅 `return { appMarker: 'keep-me' }`，没有把 pinia 作为根选项返回；参考 web/ssr-reference.md:121-123 与 base/store-reference.md:5 要求 `return { pinia: createPinia() }`。",
+            "outputs/app.mpx:22 `this.$pinia = pinia` 作为替代挂载点；参考 web/ssr-reference.md:113 明确 onAppInit 不能访问尚未创建的 Vue 实例，框架也不会把该自定义字段当作 pinia 根选项安装，因此页面侧的 `this.$pinia` 语义不成立。",
+            "outputs/stores/detail.js:13-15 的 getDetailPinia() 返回 `getApp().$pinia`，outputs/detail.mpx:78-83 据此创建 store；参考 web/ssr-reference.md:237 指出 getApp() 在非浏览器环境会打印危险调用错误、不能充当请求级入口，runInNewContext:false 下并发 A/B 无法保证各取自己的 app/pinia。",
+            "部分满足项：outputs/stores/detail.js:7-9 只在工厂内创建 pinia、无模块级 pinia/store 实例；outputs/detail.mpx:78-83 在页面实例上缓存 detailStore（await 前保留），outputs/app.mpx:25 仍返回 appMarker。"
+          ],
+          "unverified": [
+            "未构建、未实际运行并发 A/B，无法实测两个请求是否拿到不同 pinia；也未在真实 @mpxjs/pinia 上确认未返回 pinia 时 useDetailStore(undefined) 是否回退到全局/最后创建的活跃实例。",
+            "未验证 Mpx 默认 SSR 入口对未返回 pinia 的 app 是否仍注入 $pinia。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "ssr.await-prefetch",
+          "status": "passed",
+          "evidence": [
+            "outputs/detail.mpx:64-76 serverPrefetch 返回 `this.loadDetail(id).then(...)`，在 fetch 完成后再写 `this.$ssrContext.state` / `title`，是真正可等待的数据 Promise。",
+            "outputs/stores/detail.js:46-56 fetchItem 返回 Promise（命中 items[id]、复用 pending 或调用 loadItem）；outputs/stores/detail.js:57-74 async loadItem `await fetchDetail(id)`，action 本身返回 Promise。",
+            "outputs/detail.mpx:40-48 onLoad 在微信/支付宝/RN/web 客户端都会 setId 并返回 loadDetail 的 Promise，客户端加载入口保留；SSR 侧同一 id 由 outputs/stores/detail.js:49-55 的 items/pending 复用同一个请求，不会因 onLoad 与 serverPrefetch 并发而重复发请求。",
+            "outputs/api/detail.js:105-113 fetchDetail 为 async 且返回 `{id,title}` 数据 Promise，不是未 Promise 化的 RequestTask。"
+          ],
+          "unverified": [
+            "未实际渲染，未能验证延迟响应时 HTML 确实等待标题输出；SSR 下 onLoad 也会执行（outputs/detail.mpx:40-48 无 typeof window 跳过），仅靠 store 去重保证不重复请求。",
+            "该预取链路依赖 ssr.request-pinia 的 store 获取方式；若 getApp() 在 SSR 不可用，serverPrefetch 会在取 store 时报错（同一根因已在 ssr.request-pinia 计分）。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "ssr.browser-import",
+          "status": "passed",
+          "evidence": [
+            "outputs/detail.mpx:16-17 顶层只静态 import @mpxjs/core 与 stores，没有 analytics 的顶层静态 import。",
+            "outputs/detail.mpx:55-63 在 onReady 内以 `__mpx_mode__ === 'web' && typeof window !== 'undefined'` 前置判断后动态 `import('./analytics.web')`，只有浏览器挂载后才加载。",
+            "outputs/analytics.web.js:10-18 模块顶层仅 `let mounted = false`，window.location/document 的读取全部在 mountAnalytics() 内并有 window/document 守卫，Node 即使求值该模块也不会触碰浏览器全局。",
+            "outputs/detail.mpx:58 同时使用 __mpx_mode__ 与 typeof window，而不是把 mode=web 当浏览器判断；小程序/RN 编译时 __mpx_mode__ 为常量，该分支被消除。"
+          ],
+          "unverified": [
+            "未构建 wx/ali/RN 产物核对 analytics chunk 是否被完全剔除（代码层面该模块不会被执行）；未在无 window/document 的 Node 中实跑页面渲染。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "ssr.hydration-cache",
+          "status": "passed",
+          "evidence": [
+            "outputs/app.mpx:18-20 客户端在 onAppInit 中用 `window.__INITIAL_STATE__` 覆盖 pinia.state.value，恢复首屏状态。",
+            "outputs/detail.mpx:71-75 预取结束后写 `this.$ssrContext.state = { detail: store.$state }`，outputs/server.js:36 模板用 `{{{ renderState() }}}` 序列化为 window.__INITIAL_STATE__。",
+            "outputs/stores/detail.js:37-43 状态按 id 分桶（items/errors/pendingIds，键为请求 id）；outputs/stores/detail.js:48-49 仅当 items[id] 存在才短路，hydration 恢复 A 后不重复获取。",
+            "outputs/stores/detail.js:64-69 失败只写 errors[id]，不写 items[id]，也没有全局 loaded 标记；outputs/detail.mpx:110-113 handleRetry 会重新 fetchItem。",
+            "outputs/detail.mpx:101-109 web 客户端监听 `$route.query.id`（ssr 与无 window 时跳过）→ setId → fetchItem，切换到 B 会按新 id 加载，不是永久跳过后续请求。"
+          ],
+          "unverified": [
+            "未实际执行 hydration 与站内 A→B 导航；恢复结果依赖 ssr.request-pinia 的 pinia 装配，若 store 未绑定到被恢复的 pinia，实际复用会失效（同一根因已在 ssr.request-pinia 计分）。"
+          ],
+          "blocked_by": []
+        },
+        {
+          "id": "ssr.dual-build",
+          "status": "failed",
+          "evidence": [
+            "服务端/客户端产物存在：outputs/ssr-build.js:69-89 server 配置（target: 'node'、libraryTarget: 'commonjs2'、vue-ssr-server-bundle.json、VueSSRServerPlugin、splitChunks:false）与 outputs/ssr-build.js:56-67 client 配置（VueSSRClientPlugin 产 manifest）；两者由同一 createBaseConfig 派生（outputs/ssr-build.js:97-101），未另写 Web 专属页面。",
+            "outputs/server.js:18-19 同时加载 server bundle 与 client manifest，outputs/server.js:41-49 用 createBundleRenderer 复用 renderer；outputs/server.js:60-66 每个请求新建 context 并传入 `url: req.originalUrl`；outputs/server.js:35 模板含 `<!--vue-ssr-outlet-->`，bundle/manifest/outlet 配套。",
+            "失败点（异步首屏等待路由）：参考 web/ssr-reference.md:105 与 web/web-config-reference.md:30 要求异步分包首屏设置 MpxWebpackPlugin 的 `webConfig.useSSR: true` 让客户端等待 router.onReady；outputs/ssr-build.js 全文没有 webConfig/useSSR（grep 无匹配），仅 outputs/ssr-build.js:23-26 用未在参考中出现的顶层 `ssr: true` 声称启用默认 SSR 入口，且该片段只存在于注释、实际导出的配置未注入 MpxWebpackPlugin。",
+            "outputs/verification.md:131-133 也自述 `ssr: true` 开关名未经确认，不能作为通过依据；页面位于异步普通分包，缺 useSSR 时客户端会在路由就绪前挂载，首屏路由等待不成立。"
+          ],
+          "unverified": [
+            "未构建，无法核对产物中是否真的生成 Mpx 默认 SSR 入口、client manifest 是否覆盖异步分包页面 chunk；也未验证服务端 bundle 对异步分包页面的解析。"
+          ],
+          "blocked_by": []
+        }
+      ],
+      "review_notes": "缺陷：onAppInit 未返回 pinia 且用 getApp() 取 store，SSR 隔离不成立；异步首屏缺 webConfig.useSSR。预取、埋点、按 id 缓存正确。"
+    }
+  ],
+  "runtime": {
+    "runtime": "DeepSeek Harness 0.2.1-rc.5（desktop profile）subagent",
+    "provider": "deepseek-official",
+    "model": "DeepSeek-V4.1-Flash",
+    "reasoning_effort": "high",
+    "run_date": "2026-11-03",
+    "model_alias": "deepseek-flash",
+    "model_build": "1017"
+  }
+}

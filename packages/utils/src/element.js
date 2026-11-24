@@ -19,32 +19,36 @@ function parseSelector (selector) {
   })
 }
 
-function matchSelector (vnode, selectorGroups) {
-  let vnodeId
-  let vnodeClasses = []
-  if (vnode && vnode.data) {
-    if (vnode.data.attrs && vnode.data.attrs.id) vnodeId = vnode.data.attrs.id
-    if (vnode.data.staticClass) vnodeClasses = vnode.data.staticClass.split(/\s+/)
+function stringifyClass (value) {
+  if (typeof value === 'string') return value
+  if (Array.isArray(value)) return value.map(stringifyClass).join(' ')
+  if (value && typeof value === 'object') {
+    return Object.keys(value).filter(key => value[key]).join(' ')
   }
+  return ''
+}
 
-  if (vnodeId || vnodeClasses.length) {
-    for (let i = 0; i < selectorGroups.length; i++) {
-      const { id, classes } = selectorGroups[i]
-      if (id === vnodeId) return true
-      if (classes.length && classes.every((item) => vnodeClasses.includes(item))) {
-        return true
-      }
+function matchSelector (vm, selectorGroups) {
+  // 多个组件可能共享同一个根 DOM，选择器只匹配组件调用节点上的属性。
+  const { data } = vm.$vnode
+  if (!data) return false
+  let vnodeClasses
+  return selectorGroups.some(({ id, classes }) => {
+    if ((!id && !classes.length) || (id && id !== (data.attrs && data.attrs.id))) return false
+    if (!classes.length) return true
+    if (!vnodeClasses) {
+      vnodeClasses = `${data.staticClass || ''} ${stringifyClass(data.class)}`.split(/\s+/)
     }
-  }
-  return false
+    return classes.every(item => vnodeClasses.includes(item))
+  })
 }
 
 function walkChildren (vm, selectorGroups, context, result, all) {
   if (vm.$children && vm.$children.length) {
     for (let i = 0; i < vm.$children.length; i++) {
       const child = vm.$children[i]
-      if (child.$vnode.context === context && !child.$options.__mpxBuiltIn) {
-        if (matchSelector(child.$vnode, selectorGroups)) {
+      if (child.$vnode.context === context && !child.$options.__mpxBuiltIn && !child.$options.__mpxTemplate) {
+        if (matchSelector(child, selectorGroups)) {
           result.push(child)
           if (!all) return
         }

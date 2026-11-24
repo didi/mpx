@@ -9,15 +9,12 @@ function stopPullDownRefresh (options = {}) {
   if (router) {
     let err
 
-    const vnode = router.__mpxActiveVnode
-    if (vnode && vnode.componentInstance) {
-      const currentPage = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
-      if (currentPage && currentPage.__stopPullDownRefresh) {
-        try {
-          currentPage.__stopPullDownRefresh()
-        } catch (e) {
-          err = e
-        }
+    const currentPage = getCurrentPages().slice(-1)[0]
+    if (currentPage && currentPage.__stopPullDownRefresh) {
+      try {
+        currentPage.__stopPullDownRefresh()
+      } catch (e) {
+        err = e
       }
     }
     if (err) {
@@ -39,15 +36,12 @@ function startPullDownRefresh (options = {}) {
   if (router) {
     let err
 
-    const vnode = router.__mpxActiveVnode
-    if (vnode && vnode.componentInstance) {
-      const currentPage = vnode.tag.endsWith('mpx-tab-bar-container') ? vnode.componentInstance.$refs.tabBarPage : vnode.componentInstance
-      if (currentPage && currentPage.__startPullDownRefresh) {
-        try {
-          currentPage.__startPullDownRefresh()
-        } catch (e) {
-          err = e
-        }
+    const currentPage = getCurrentPages().slice(-1)[0]
+    if (currentPage && currentPage.__startPullDownRefresh) {
+      try {
+        currentPage.__startPullDownRefresh()
+      } catch (e) {
+        err = e
       }
     }
     if (err) {

@@ -1,4 +1,4 @@
-# 实例 API
+# 实例 API {#instance-api}
 
 ## $set
 
@@ -9,7 +9,7 @@ function $set(target: Object | Array, property: string | number, value: any): vo
 这是全局 `mpx.set` 的别名。向响应式对象中添加一个 property，并确保这个新 property 同样是响应式的，且触发视图更新。
 它必须用于向响应式对象上添加新 property，因为 Mpx 无法探测普通的新增 property (比如 this.myObject.newProperty = 'hi')
 
-- **参考**：[mpx.set](global-api.html#set)
+- **参考**：[mpx.set](global-api.md#set)
 
 ## $watch
 
@@ -47,6 +47,25 @@ var unwatch = this.$watch('a', cb)
 // 之后取消观察
 unwatch()
 ```
+
+- `options.onTrack` / `options.onTrigger`
+
+`this.$watch` 的第三参数支持调试回调，第二参数使用含 `handler` 的对象时也可直接在该对象中配置。支持小程序和 Mpx2RN，Web 使用 Vue 2.7 的原生实现；仅在开发环境生效。
+
+```js
+this.$watch('count', function (value, oldValue) {
+  console.log(oldValue, value)
+}, {
+  onTrack(event) {
+    console.log('watch tracked', event.type, event.key)
+  },
+  onTrigger(event) {
+    debugger
+  }
+})
+```
+
+`onTrigger` 在依赖通知时同步执行，侦听回调仍按原有调度规则运行，也可能因结果未变化而跳过。停止侦听后调试事件随之停止。回调中避免修改响应式状态；Web 的 `onTrack` 中额外读取响应式状态还可能增加依赖或递归触发自身。事件结构和读取隔离差异见 [watch 系列调试选项](reactivity-api.md#watch-debug-options)。
 
 - `options.deep`
 
@@ -128,7 +147,7 @@ this.$watch('someObject', callback, {
 
 const someObjectWatch = this.$getWatcherByName('someObject')
 ```
-**参考**：[mpx.watch](global-api.html#watch)
+**参考**：[mpx.watch](global-api.md#watch)
 
 ## $delete
 
@@ -157,7 +176,7 @@ function $delete(target: Object, key: string | number): void
   }
   })
 ```
-**参考：** [Mpx.delete](global-api.html#delete)
+**参考：** [Mpx.delete](global-api.md#delete)
 
 ## $refs
 
@@ -183,7 +202,7 @@ ready (){
   },
 })
 ```
-**参考：** [组件 ref](../guide/basic/refs.html)
+**参考：** [组件 ref](../guide/basic/refs.md)
 
 ## $asyncRefs
 **仅字节小程序可用**，因为字节小程序 `selectComponent` 和 `selectAllComponents` 方法为异步方法，因此使用 $refs 同步获取组件实例并不保证能够拿到正确的组件实例，需使用异步 `$asyncRefs`。

@@ -5,10 +5,14 @@ const oldObserveList = new Set()
 
 if (isBrowser) {
   window.addEventListener('offline', () => {
-    oldObserveList.forEach(fn => fn({ isConnected: false, type: 'none' }))
+    if (!oldObserveList.size) return
+    const result = { isConnected: false, networkType: 'none' }
+    oldObserveList.forEach(fn => fn(result))
   })
   window.addEventListener('online', () => {
-    oldObserveList.forEach(fn => fn({ isConnected: true, type: 'unknow' }))
+    if (!oldObserveList.size) return
+    const result = { isConnected: true, networkType: 'unknown' }
+    oldObserveList.forEach(fn => fn(result))
   })
 }
 
@@ -22,10 +26,12 @@ export function onNetworkStatusChange (callbackFn) {
       const isConnected = navigator.onLine
       callbackFn({
         isConnected,
-        type: isConnected ? evt.currentTarget.effectiveType : 'none'
+        networkType: isConnected ? evt.currentTarget.effectiveType : 'none'
       })
     }
-    fnMap.set(callbackFn, proxyCallback)
+    const proxyCallbacks = fnMap.get(callbackFn) || new Set()
+    proxyCallbacks.add(proxyCallback)
+    fnMap.set(callbackFn, proxyCallbacks)
     navigator.connection.addEventListener('change', proxyCallback)
   } else {
     typeof callbackFn === 'function' && oldObserveList.add(callbackFn)
@@ -37,8 +43,25 @@ export function offNetworkStatusChange (callbackFn) {
     throwSSRWarning('offNetworkStatusChange API is running in non browser environments')
     return
   }
+  if (callbackFn == null) {
+    // 不传 callback 时清除所有监听
+    fnMap.forEach((proxyCallbacks) => {
+      if (navigator.connection) {
+        proxyCallbacks.forEach(proxyCallback => {
+          navigator.connection.removeEventListener('change', proxyCallback)
+        })
+      }
+    })
+    fnMap.clear()
+    oldObserveList.clear()
+    return
+  }
   if (navigator.connection) {
-    navigator.connection.removeEventListener('change', fnMap.get(callbackFn))
+    const proxyCallbacks = fnMap.get(callbackFn)
+    proxyCallbacks && proxyCallbacks.forEach(proxyCallback => {
+      navigator.connection.removeEventListener('change', proxyCallback)
+    })
+    fnMap.delete(callbackFn)
   } else {
     oldObserveList.has(callbackFn) && oldObserveList.delete(callbackFn)
   }

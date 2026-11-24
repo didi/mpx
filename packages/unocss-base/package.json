@@ -1,19 +1,27 @@
 {
   "name": "@mpxjs/unocss-base",
   "description": "mpx unocss base preset",
-  "version": "2.9.48",
+  "version": "2.11.2",
   "main": "lib/index.js",
   "directories": {
     "lib": "lib"
   },
+  "type": "module",
   "scripts": {},
   "author": "",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/didi/mpx.git",
+    "directory": "packages/unocss-base"
+  },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
     "access": "public"
   },
   "dependencies": {
-    "@unocss/preset-uno": "^0.52.7"
+    "@unocss/preset-legacy-compat": "66.7.5",
+    "@unocss/preset-mini": "66.7.5",
+    "@unocss/preset-wind3": "66.7.5"
   }
 }

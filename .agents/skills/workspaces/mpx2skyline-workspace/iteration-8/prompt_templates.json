@@ -1,0 +1,32 @@
+{
+  "description": "与 RN iteration-18 使用相同独立进程执行协议；仅比较 mpx 与 mpx2skyline，目标为微信 WebView / Skyline。",
+  "variables": {
+    "TASK_PROMPT": "evals.json 中的 prompt",
+    "INPUT_PATH": "主输入文件绝对路径",
+    "INPUT_DIR": "本 case 的只读 input 目录",
+    "OUTPUT_DIR": "本组 outputs 绝对路径",
+    "OUTPUT_PATH": "主要交付文件绝对路径",
+    "REQUIRED_OUTPUTS": "本 case 的完整交付清单",
+    "RUN_DIR": "本组 run-1 证据目录",
+    "WORKDIR": "mpx2skyline-workspace 的绝对路径",
+    "MODEL": "显式传入；本轮对齐值 gpt-6.1-sol",
+    "REASONING_EFFORT": "显式传入；本轮对齐值 high",
+    "METRICS_PATH": "执行器从真实 JSONL usage 和运行耗时生成，准备阶段不写指标"
+  },
+  "agent_config": {
+    "model": "{{MODEL}}",
+    "reasoning_effort": "{{REASONING_EFFORT}}",
+    "fork_turns": "none",
+    "run_in_background": true
+  },
+  "templates": {
+    "mpx": {
+      "label": "使用 mpx Skill",
+      "prompt": "你是一个 Mpx 跨端开发专家。请完成以下任务：\n\n**任务**：{{TASK_PROMPT}}\n\n**适配目标**：仅微信 wx 平台的 WebView / Skyline，兼容目标 renderer 的既定业务体验。\n\n**工作目录**：将 {{WORKDIR}} 作为所有 shell 命令的固定工作目录。\n\n**输入**：先读取 {{INPUT_DIR}}/task.md，再读取主输入 {{INPUT_PATH}} 及同目录业务依赖。范围已确认，按 task.md 实施。\n\n**Skill 参考**：首先完整读取 {{ITERATION_DIR}}/skill-snapshots/mpx/SKILL.md，按任务流程和知识库索引，仅在需要时读取本组快照 references 中的相关参考，严格遵循适配原则。\n\n**评测隔离**：本次明确要求隔离比较，只能使用本组指定 Skill，不得自动加载其他 Skill。不得读取 ../../mpx2skyline/ 的 Skill 或 references、其他专项 Skill、workspace 中的 evals/grade/评分契约、其他组或历史输出；本组仅使用指定快照，不读取实时 Skill 目录或另一组快照。两组均可使用 npm run compile-validate 提供的同一基础编译工具（workspace tools/ 下的脚本，仅工具，不包含另一组知识）；编译是否执行由本组 Skill 与任务要求决定。\n\n**输出**：将完整业务产物写入 {{OUTPUT_DIR}}，必须交付：{{REQUIRED_OUTPUTS}}。主要文件为 {{OUTPUT_PATH}}。仅修改本组 outputs 与 run-1；不得修改 input、Skill 或环境配置。\n\n**验证**：简要说明写入 outputs/report.md，测试及 validation.json 证据放 {{RUN_DIR}}。区分静态、mock、真实编译与真机；未执行记 not_run，失败修复最多 3 次。不要自行填写 grading.json、assessment.json 或 metrics/timing，执行器负责采集真实耗时和 Token。\n\n框架依赖使用workspaces 顶层从 npm 官方源统一安装的 @mpxjs/* latest 发布版本；评测准备阶段在 workspaces 顶层运行 npm run update-framework && npm run check-env；模型执行期间使用现有版本。编译时以当前工作区作为 --project-root（npm run compile-validate 已配置），保持各测试集独立构建配置。两组共用同一锁文件，执行期间不更新依赖，不引用仓库 packages/ 或复制、修改框架源码。实际能力以发布包为准，未支持项如实记录。"
+    },
+    "mpx2skyline": {
+      "label": "使用 mpx2skyline Skill",
+      "prompt": "你是一个 Mpx 跨端开发专家。请完成以下任务：\n\n**任务**：{{TASK_PROMPT}}\n\n**适配目标**：仅微信 wx 平台的 WebView / Skyline，兼容目标 renderer 的既定业务体验。\n\n**工作目录**：将 {{WORKDIR}} 作为所有 shell 命令的固定工作目录。\n\n**输入**：先读取 {{INPUT_DIR}}/task.md，再读取主输入 {{INPUT_PATH}} 及同目录业务依赖。范围已确认，按 task.md 实施。\n\n**Skill 参考**：首先完整读取 {{ITERATION_DIR}}/skill-snapshots/mpx2skyline/SKILL.md，按任务流程和知识库索引，仅在需要时读取本组快照 references 中的相关参考，严格遵循适配原则。\n\n**评测隔离**：本次明确要求隔离比较，只能使用本组指定 Skill，不得自动加载其他 Skill。不得读取 ../../mpx/ 的 Skill 或 references、其他专项 Skill、workspace 中的 evals/grade/评分契约、其他组或历史输出；本组仅使用指定快照，不读取实时 Skill 目录或另一组快照。两组均可使用 npm run compile-validate 提供的同一基础编译工具（workspace tools/ 下的脚本，仅工具，不包含另一组知识）；编译是否执行由本组 Skill 与任务要求决定。\n\n**输出**：将完整业务产物写入 {{OUTPUT_DIR}}，必须交付：{{REQUIRED_OUTPUTS}}。主要文件为 {{OUTPUT_PATH}}。仅修改本组 outputs 与 run-1；不得修改 input、Skill 或环境配置。\n\n**验证**：简要说明写入 outputs/report.md，测试及 validation.json 证据放 {{RUN_DIR}}。区分静态、mock、真实编译与真机；未执行记 not_run，失败修复最多 3 次。不要自行填写 grading.json、assessment.json 或 metrics/timing，执行器负责采集真实耗时和 Token。\n\n框架依赖使用workspaces 顶层从 npm 官方源统一安装的 @mpxjs/* latest 发布版本；评测准备阶段在 workspaces 顶层运行 npm run update-framework && npm run check-env；模型执行期间使用现有版本。编译时以当前工作区作为 --project-root（npm run compile-validate 已配置），保持各测试集独立构建配置。两组共用同一锁文件，执行期间不更新依赖，不引用仓库 packages/ 或复制、修改框架源码。实际能力以发布包为准，未支持项如实记录。"
+    }
+  }
+}

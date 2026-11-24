@@ -55,9 +55,6 @@ module.exports = {
 
   generateBuildMap: true,
 
-  // 输出web时，vue-loader版本<15时需要将该配置关闭
-  forceDisableBuiltInLoader: true,
-
   subpackageModulesRules: {
     include: [/utils\/common/]
   },
@@ -90,6 +87,16 @@ module.exports = {
     }
     // 输出示例： pages/testax34dde3/index.js
     return path.join(type + 's', name + hash, 'index' + ext)
-  }
+  },
 
+  asyncSubpackageRules: [
+    {
+      include: path.resolve('./src/subpackage/test/components/asyncComp.mpx'),
+      root: 'test',
+      placeholder: {
+        name: 'placeholder-view',
+        resource: path.resolve('./src/components/placeholder-view.mpx')
+      }
+    }
+  ]
 }

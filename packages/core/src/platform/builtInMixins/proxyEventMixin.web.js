@@ -17,7 +17,7 @@ export default function proxyEventMixin () {
           trim: val => typeof val === 'string' && val.trim()
         }
         const originValue = valuePath.reduce((acc, cur) => acc[cur], $event.detail)
-        const value = filterMethod ? (innerFilter[filterMethod] ? innerFilter[filterMethod](originValue) : typeof this[filterMethod] === 'function' && this[filterMethod]) : originValue
+        const value = filterMethod ? (innerFilter[filterMethod] ? innerFilter[filterMethod](originValue) : typeof this[filterMethod] === 'function' ? this[filterMethod](originValue) : originValue) : originValue
         setByPath(this, expr, value)
       },
       __invoke (rawEvent, eventConfig = []) {
@@ -28,7 +28,7 @@ export default function proxyEventMixin () {
         }
         const location = this.__mpxProxy.options.mpxFileResource
 
-        if (rawEvent.target && !rawEvent.target._datasetProcessed) {
+        if (rawEvent && rawEvent.target && !rawEvent.target._datasetProcessed) {
           const originalDataset = rawEvent.target.dataset
           Object.defineProperty(rawEvent.target, 'dataset', {
             get: () => parseDataset(originalDataset),
@@ -37,7 +37,7 @@ export default function proxyEventMixin () {
           })
           rawEvent.target._datasetProcessed = true
         }
-        if (rawEvent.currentTarget && !rawEvent.currentTarget._datasetProcessed) {
+        if (rawEvent && rawEvent.currentTarget && !rawEvent.currentTarget._datasetProcessed) {
           const originalDataset = rawEvent.currentTarget.dataset
           Object.defineProperty(rawEvent.currentTarget, 'dataset', {
             get: () => parseDataset(originalDataset),

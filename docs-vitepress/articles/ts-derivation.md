@@ -6,7 +6,7 @@ sidebarDepth: 2
 
 > 作者：[anotherso1a](https://github.com/anotherso1a)
 
-## 前言
+## 前言 {#intro}
 
 在**Mpx框架**中我们采用了类似 `Vuex` 的数据仓库设计，这使得小程序的数据也可以在框架中得到**统一的管理**。但由于设计上的原因，这一部分在TS推导的实现上变得异常艰难，其中有一个明显的问题就是**链式key**的推导：
 

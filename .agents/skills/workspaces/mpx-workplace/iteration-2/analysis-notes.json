@@ -1,0 +1,11 @@
+[
+  "case5 noskill的 rn.animation-priming 保留pending：rn-template-reference.md:149允许boolean，rn-style-practice.md:290要求api/transition；尚无RN宿主行为证据消解此冲突。mpx使用明确的transition值，该歧义不影响其对应静态判定。",
+  "这是原48条断言的静态设计符合率，不是完整构建或真机通过率；每组每个case仅一次正式执行。",
+  "16/16正式运行完成，访问审计和输入/Skill哈希检查均通过，输出在独立验证前后保持原样。",
+  "mpx组只读取本case输入、mpx快照与自身输出；noskill组只读取本case输入与自身输出。编译、lint与评分在交付后独立执行，不回传执行者。",
+  "正式运行统一 gpt-6.1-sol / high / priority；首次因TLS断流中断的3个尝试不纳入成绩与用量，其原始过程文件已清理。正式日志中的重连计入真实壁钟耗时，因此耗时差不应解释为纯推理效率。",
+  "Token为CLI累计input+output，input已含缓存输入；不代表单次上下文长度，也不包括不可见的审批服务成本。",
+  "上轮允许公共源码与测试反馈，本轮限制条件不同，不据前后分数差推断Skill质量变化。",
+  "独立单文件编译使用锁定发布包webpack-plugin 2.11.1和共享构建配置；没有集成所有交付App/插件配置，不能等同完整业务构建。新版mode/srcMode题设与发布编译器有差异，相关诊断单列，不能据此覆盖题设契约。",
+  "case2 noskill以固定几何实现定位，业务行为可成立，但没有覆盖预定义query-scope中的实例查询与RN查询节点，正式该项未通过；若只要求定位结果，该组可增加1分。"
+]

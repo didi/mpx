@@ -19,6 +19,11 @@ function onWindowResize (callback) {
 }
 
 function offWindowResize (callback) {
+  if (callback == null) {
+    // 不传 callback 时清除所有监听
+    callbacks.length = 0
+    return
+  }
   const index = callbacks.indexOf(callback)
   if (index > -1) {
     callbacks.splice(index, 1)

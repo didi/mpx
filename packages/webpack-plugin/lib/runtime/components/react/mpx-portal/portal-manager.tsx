@@ -19,7 +19,7 @@ const _PortalManager = forwardRef((props: PortalManagerProps, ref:ForwardedRef<u
     setState((prevState) => ({
       portals: [...prevState.portals, { key, children }]
     }))
-  }, [state])
+  }, [])
 
   const update = useCallback((key: number, children: ReactNode) => {
     setState((prevState) => ({
@@ -30,7 +30,7 @@ const _PortalManager = forwardRef((props: PortalManagerProps, ref:ForwardedRef<u
         return item
       })
     }))
-  }, [state])
+  }, [])
 
   const unmount = useCallback((key: number) => {
     setState((prevState) => ({

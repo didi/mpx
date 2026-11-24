@@ -1,33 +1,45 @@
-const path = require('path')
-const { minimatch } = require('minimatch')
-const unoConfig = require('@unocss/config')
-const core = require('@unocss/core')
-const mpxConfig = require('@mpxjs/webpack-plugin/lib/config')
-const toPosix = require('@mpxjs/webpack-plugin/lib/utils/to-posix')
-const fixRelative = require('@mpxjs/webpack-plugin/lib/utils/fix-relative')
-const parseRequest = require('@mpxjs/webpack-plugin/lib/utils/parse-request')
-const { has } = require('@mpxjs/webpack-plugin/lib/utils/set')
-const MpxWebpackPlugin = require('@mpxjs/webpack-plugin')
-const UnoCSSWebpackPlugin = require('./web-plugin')
-const transformerDirectives = require('@unocss/transformer-directives').default
-const transformerVariantGroup = require('@unocss/transformer-variant-group')
-const {
+import MpxWebpackPlugin from '@mpxjs/webpack-plugin'
+import mpxConfig from '@mpxjs/webpack-plugin/lib/config.js'
+import env from '@mpxjs/webpack-plugin/lib/utils/env.js'
+import escapeObjectKey from '@mpxjs/webpack-plugin/lib/utils/escape-class-object-key.js'
+import fixRelative from '@mpxjs/webpack-plugin/lib/utils/fix-relative.js'
+import parseRequest from '@mpxjs/webpack-plugin/lib/utils/parse-request.js'
+import set from '@mpxjs/webpack-plugin/lib/utils/set.js'
+import toPosix from '@mpxjs/webpack-plugin/lib/utils/to-posix.js'
+import isValidIdentifierStr from '@mpxjs/webpack-plugin/lib/utils/is-valid-identifier-str.js'
+import { loadConfig } from '@unocss/config'
+import { createGenerator, e as cssEscape } from '@unocss/core'
+import transformerDirectives from '@unocss/transformer-directives'
+import transformerVariantGroup from '@unocss/transformer-variant-group'
+import { minimatch } from 'minimatch'
+import * as path from 'path'
+import {
   parseClasses,
-  parseStrings,
-  parseMustache,
-  stringifyAttr,
+  parseClassExpression,
+  parseCommentConfig,
   parseComments,
-  parseCommentConfig
-} = require('./parser')
-const { getReplaceSource, getConcatSource, getRawSource } = require('./source')
-const {
-  transformStyle,
+  parseMustache,
+  stringifyAttr
+} from './parser.js'
+import platformPreflightsMap from './platform.js'
+import { UnoCSSRNWebpackPlugin } from './rn-plugin/index.js'
+import {
+  getConcatSource,
+  getRawSource,
+  getReplaceSource
+} from './source.js'
+import {
   buildAliasTransformer,
-  transformGroups,
+  cssRequiresTransform,
   mpEscape,
-  cssRequiresTransform
-} = require('./transform')
-const platformPreflightsMap = require('./platform')
+  transformGroups,
+  transformStyle
+} from './transform.js'
+import { UnoCSSWebpackPlugin } from './web-plugin/index.js'
+
+const { isWeb, isReact } = env
+const { has } = set
+
 const PLUGIN_NAME = 'MpxUnocssPlugin'
 
 function filterFile (file, scan) {
@@ -80,17 +92,17 @@ function normalizeOptions (options) {
         'src/**/*'
       ]
     },
-    escapeMap = {},
     // 公共的配置
     root = process.cwd(),
     config,
     configFiles,
-    transformCSS,
+    transformCSS, // false  | true | { applyVariable: ['--at-apply'] }
     transformGroups, // false | true | { separators: [':','-'] }
     webOptions = {}
   } = options
   // 是否兼容为true的写法
   if (transformGroups) transformGroups = transformGroups instanceof Object ? transformGroups : {}
+  if (transformCSS) transformCSS = transformCSS instanceof Object ? transformCSS : {}
   // web配置
   // todo config读取逻辑通过UnoCSSWebpackPlugin内置逻辑进行，待改进
   webOptions = {
@@ -98,31 +110,9 @@ function normalizeOptions (options) {
     exclude: scan.exclude || [],
     transformers: [
       ...transformGroups ? [transformerVariantGroup(transformGroups)] : [],
-      ...transformCSS ? [transformerDirectives()] : []
+      ...transformCSS ? [transformerDirectives(transformCSS)] : []
     ],
     ...webOptions
-  }
-
-  escapeMap = {
-    '(': '_pl_',
-    ')': '_pr_',
-    '[': '_bl_',
-    ']': '_br_',
-    '{': '_cl_',
-    '}': '_cr_',
-    '#': '_h_',
-    '!': '_i_',
-    '/': '_s_',
-    '.': '_d_',
-    ':': '_c_',
-    ',': '_2c_',
-    '%': '_p_',
-    '\'': '_q_',
-    '"': '_dq_',
-    '+': '_a_',
-    $: '_si_',
-    unknown: '_u_',
-    ...escapeMap
   }
 
   scan.include = normalizeRules(scan.include, root)
@@ -133,7 +123,6 @@ function normalizeOptions (options) {
     styleIsolation,
     minCount,
     scan,
-    escapeMap,
     root,
     config,
     configFiles,
@@ -178,12 +167,12 @@ function getPlugin (compiler, curPlugin) {
 class MpxUnocssPlugin {
   constructor (options = {}) {
     this.options = normalizeOptions(options)
+    this.isUnoCSSScanFile = file => filterFile(toPosix(file), this.options.scan)
   }
 
   async generateStyle (uno, classes = [], options = {}) {
-    const tokens = new Set(classes)
-    const result = await uno.generate(tokens, options)
-    return mpEscape(result.css, this.options.escapeMap)
+    const result = await uno.generate(new Set(classes), options)
+    return mpEscape(result.css)
   }
 
   getSafeListClasses (safelist) {
@@ -206,22 +195,103 @@ class MpxUnocssPlugin {
 
   async createContext (compilation, mode) {
     const { root, config, configFiles } = this.options
-    const { config: resolved, sources } = await unoConfig.loadConfig(root, config, configFiles)
+    const { config: resolved, sources } = await loadConfig(root, config, configFiles)
     sources.forEach((item) => {
       compilation.fileDependencies.add(item)
-      // fix jiti require cache for watch
-      delete require.cache[item]
     })
 
     const platformPreflights = platformPreflightsMap[mode] || []
 
-    return core.createGenerator({
+    return await createGenerator({
       ...resolved,
       preflights: [
         ...(resolved.preflights || []),
         ...platformPreflights
       ]
     })
+  }
+
+  getTemplateParser (uno) {
+    // process classes
+    const transformAlias = buildAliasTransformer(uno.config.alias)
+    const transformClasses = (source, classNameHandler, unknownClassChars) => {
+      // pre process
+      source = transformAlias(source)
+      if (this.options.transformGroups) {
+        source = transformGroups(source, this.options.transformGroups)
+      }
+      const content = source.source()
+      // escape & fill classesMap
+      return content.split(/\s+/).map((className) => {
+        return mpEscape(cssEscape(classNameHandler(className)), (char) => {
+          let chars = unknownClassChars.get(className)
+          if (!chars) {
+            chars = new Set()
+            unknownClassChars.set(className, chars)
+          }
+          chars.add(char)
+        })
+      }).join(' ')
+    }
+    return async (source, classNameHandler = c => c, error) => {
+      // 单个模板内先去重，再由 UnoCSS 判断包含未知字符的类名是否有效
+      const unknownClassChars = new Map()
+      source = getReplaceSource(source)
+      const content = source.original().source()
+      parseClasses(content).forEach(({ result, start, end }) => {
+        let { replaced, val } = parseMustache(result, (exp) => {
+          const expSource = getReplaceSource(exp)
+          const { strings, objectKeys } = parseClassExpression(exp)
+          strings.forEach(({ result, start, end }) => {
+            result = transformClasses(result, classNameHandler, unknownClassChars)
+            expSource.replace(start, end, result)
+          })
+          objectKeys.forEach(({ result, start, end, shorthand }) => {
+            if (typeof result !== 'string') {
+              error && error(`Dynamic classname [${result}] can not be escaped as a valid identifier, which is not supported.`)
+              return
+            }
+            const className = transformClasses(result, classNameHandler, unknownClassChars)
+            const propertyName = escapeObjectKey(className)
+            if (!isValidIdentifierStr(propertyName)) {
+              error && error(`Dynamic classname [${result}] can not be escaped as a valid identifier, which is not supported.`)
+            } else {
+              const replacement = shorthand && propertyName !== result
+                ? `${propertyName}: ${result}`
+                : propertyName
+              expSource.replace(start, end, replacement)
+            }
+          })
+          return expSource.source()
+        }, str => transformClasses(str, classNameHandler, unknownClassChars))
+        if (replaced) {
+          val = stringifyAttr(val)
+          source.replace(start - 1, end + 1, val)
+        }
+      })
+      await Promise.all(Array.from(unknownClassChars).map(async ([className, chars]) => {
+        if (!await uno.parseToken(className)) {
+          chars.forEach((char) => {
+            error && error(`Classname [${className}] contains unsupported character [${char}].`)
+          })
+        }
+      }))
+      // process comments
+      const commentConfig = {}
+      parseComments(content).forEach(({ result, start, end }) => {
+        Object.assign(commentConfig, parseCommentConfig(result))
+        source.replace(start, end, '')
+      })
+      if (commentConfig.safelist) {
+        this.getSafeListClasses(commentConfig.safelist).forEach((className) => {
+          classNameHandler(className)
+        })
+      }
+      return {
+        newsource: source,
+        commentConfig
+      }
+    }
   }
 
   apply (compiler) {
@@ -234,11 +304,12 @@ class MpxUnocssPlugin {
       return
     }
     const mode = this.mode = mpxPluginInstance.options.mode
-    if (mode === 'web') {
+    if (isWeb(mode) || isReact(mode)) {
       const { webOptions } = this.options
-      if (!getPlugin(compiler, UnoCSSWebpackPlugin)) {
+      const WebpackPlugin = isReact(mode) ? UnoCSSRNWebpackPlugin : UnoCSSWebpackPlugin
+      if (!getPlugin(compiler, WebpackPlugin)) {
         // todo 考虑使用options.config/configFiles读取配置对象后再与webOptions合并后传递给UnoCSSWebpackPlugin，保障读取的config对象与mp保持一致
-        compiler.options.plugins.push(new UnoCSSWebpackPlugin(webOptions))
+        compiler.options.plugins.push(new WebpackPlugin(webOptions))
       }
       compiler.hooks.done.tap(PLUGIN_NAME, ({ compilation }) => {
         for (const dep of compilation.fileDependencies) {
@@ -256,10 +327,12 @@ class MpxUnocssPlugin {
     }, (compilation) => {
       const { __mpx__: mpx } = compilation
       mpx.hasUnoCSS = true
-      if (mode === 'web') return
+      mpx.isUnoCSSScanFile = this.isUnoCSSScanFile
+      if (isWeb(mode) || isReact(mode)) return
       compilation.hooks.processAssets.tapPromise({
         name: PLUGIN_NAME,
-        stage: compilation.PROCESS_ASSETS_STAGE_ADDITIONS
+        // 在 Mpx 主插件的资产处理前完成 UnoCSS 样式生成与注入。
+        stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONS - 1
       }, async (assets) => {
         const error = (msg) => {
           compilation.errors.push(new Error(msg))
@@ -291,12 +364,11 @@ class MpxUnocssPlugin {
           }
           return 'main'
         }
-
         // 处理wxss
         const processStyle = async (file, source) => {
           const content = source.source()
-          if (!content || !cssRequiresTransform(content)) return
-          const output = await transformStyle(content, file, uno)
+          if (!content || !(cssRequiresTransform(content, this.options.transformCSS))) return
+          const output = await transformStyle(content, file, uno, this.options.transformCSS)
           if (!output || output.length <= 0) {
             error(`${file} 解析style错误,检查样式文件输入!`)
             return
@@ -311,29 +383,15 @@ class MpxUnocssPlugin {
         const commentConfigMap = {}
 
         const mainClassesMap = packageClassesMaps.main
-        const cssEscape = core.e
         // config中的safelist视为主包classes
         const safeListClasses = this.getSafeListClasses(config.safelist)
 
         safeListClasses.forEach((className) => {
           mainClassesMap[className] = true
         })
-        const transformAlias = buildAliasTransformer(config.alias)
-        const transformClasses = (source, classNameHandler = c => c) => {
-          // pre process
-          source = transformAlias(source)
-          if (this.options.transformGroups) {
-            source = transformGroups(source, this.options.transformGroups)
-          }
-          const content = source.source()
-          // escape & fill classesMap
-          return content.split(/\s+/).map(classNameHandler).join(' ')
-        }
+        const parseTemplate = this.getTemplateParser(uno)
 
         const processTemplate = async (file, source) => {
-          source = getReplaceSource(source)
-          const content = source.original().source()
-
           const packageName = getPackageName(file)
           const filename = file.slice(0, -templateExt.length)
           const currentClassesMap = packageClassesMaps[packageName] = packageClassesMaps[packageName] || {}
@@ -349,46 +407,20 @@ class MpxUnocssPlugin {
             } else if (!mainClassesMap[className]) {
               currentClassesMap[className] = true
             }
-            return mpEscape(cssEscape(className), this.options.escapeMap)
+            return className
           }
-          parseClasses(content).forEach(({ result, start, end }) => {
-            let { replaced, val } = parseMustache(result, (exp) => {
-              const expSource = getReplaceSource(exp)
-              parseStrings(exp).forEach(({ result, start, end }) => {
-                result = transformClasses(result, classNameHandler)
-                expSource.replace(start, end, result)
-              })
-              return expSource.source()
-            }, str => transformClasses(str, classNameHandler))
-            if (replaced) {
-              val = stringifyAttr(val)
-              source.replace(start - 1, end + 1, val)
-            }
-          })
-          // process comments
-          const commentConfig = {}
-          parseComments(content).forEach(({ result, start, end }) => {
-            Object.assign(commentConfig, parseCommentConfig(result))
-            source.replace(start, end, '')
-          })
-          if (commentConfig.safelist) {
-            this.getSafeListClasses(commentConfig.safelist).forEach((className) => {
-              classNameHandler(className)
-            })
-          }
-
+          const { newsource, commentConfig } = await parseTemplate(source, classNameHandler, error)
           commentConfigMap[filename] = commentConfig
-
-          assets[file] = source
+          assets[file] = newsource
         }
 
         await Promise.all(Object.entries(assets).map(([file, source]) => {
           if (file.endsWith(styleExt) || file.endsWith(templateExt)) {
             const assetModules = assetsModulesMap.get(file)
-            if (has(assetModules, (module) => {
+            if (assetModules && has(assetModules, (module) => {
               if (module.resource) {
-                const resourcePath = toPosix(parseRequest(module.resource).resourcePath)
-                return filterFile(resourcePath, this.options.scan)
+                const resourcePath = parseRequest(module.resource).resourcePath
+                return this.isUnoCSSScanFile(resourcePath)
               }
               return false
             })) {
@@ -433,8 +465,8 @@ class MpxUnocssPlugin {
             // isolated模式下无需全局样式注入
             dynamicEntryInfo.main && dynamicEntryInfo.main.entries.forEach(({ entryType, filename, resource }) => {
               if (entryType === 'page' || entryType === 'component') {
-                const resourcePath = toPosix(parseRequest(resource).resourcePath)
-                if (filterFile(resourcePath, this.options.scan)) {
+                const resourcePath = parseRequest(resource).resourcePath
+                if (this.isUnoCSSScanFile(resourcePath)) {
                   const entryStyleFile = filename + styleExt
                   const mainRelativePath = fixRelative(toPosix(path.relative(path.dirname(entryStyleFile), mainUnoFile)), mode)
                   const entryStyleSource = getConcatSource(`@import ${JSON.stringify(mainRelativePath)};\n`)
@@ -487,8 +519,8 @@ class MpxUnocssPlugin {
             if (this.options.styleIsolation === 'isolated') {
               // isolated模式下无需全局样式注入
               if (entryType === 'page' || entryType === 'component') {
-                const resourcePath = toPosix(parseRequest(resource).resourcePath)
-                if (filterFile(resourcePath, this.options.scan)) {
+                const resourcePath = parseRequest(resource).resourcePath
+                if (this.isUnoCSSScanFile(resourcePath)) {
                   const entryStyleFile = filename + styleExt
                   const entryStyleSource = getConcatSource('')
                   // 独立分包中的页面和组件无需引入mainUnoFile
@@ -538,4 +570,4 @@ class MpxUnocssPlugin {
   }
 }
 
-module.exports = MpxUnocssPlugin
+export default MpxUnocssPlugin

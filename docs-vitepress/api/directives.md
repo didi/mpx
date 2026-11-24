@@ -1,4 +1,4 @@
-# 模板指令
+# 模板指令 {#template-directives}
 
 ## wx:if
 
@@ -7,10 +7,10 @@
 根据表达式的值的 [truthiness](https://developer.mozilla.org/zh-CN/docs/Glossary/Truthy) 来有条件地渲染元素。在切换时元素及它的数据绑定 / 组件被销毁并重建。 **注意：如果元素是 `<block/>`, 注意它并不是一个组件，它仅仅是一个包装元素，不会在页面中做任何渲染，只接受控制属性**。
 
 ::: danger
-当和 `wx:if` 一起使用时，`wx:for` 的优先级比 `wx:if` 更高。详见列[表渲染教程](../guide/basic/list-render.html)
+当和 `wx:if` 一起使用时，`wx:for` 的优先级比 `wx:if` 更高。详见列[表渲染教程](../guide/basic/list-render.md)
 :::
 
-**参考：** [条件渲染 - wx:if](../guide/basic/conditional-render.html)
+**参考：** [条件渲染 - wx:if](../guide/basic/conditional-render.md)
 
 ## wx:elif
 
@@ -33,7 +33,7 @@
 </view>
 ```
 
-**参考：** [条件渲染 - wx:elif](../guide/basic/conditional-render.html)
+**参考：** [条件渲染 - wx:elif](../guide/basic/conditional-render.md)
 
 ## wx:else
 
@@ -50,7 +50,7 @@
 </view>
 ```
 
-**参考：** [条件渲染 - wx:else](../guide/basic/conditional-render.html)
+**参考：** [条件渲染 - wx:else](../guide/basic/conditional-render.md)
 
 ## wx:for
 
@@ -104,12 +104,12 @@ createComponent({
 ```
 
 ::: danger
-当和 `wx:if` 一起使用时，`wx:for` 的优先级比 `wx:if` 更高。详见列[表渲染教程](../guide/basic/list-render.html)
+当和 `wx:if` 一起使用时，`wx:for` 的优先级比 `wx:if` 更高。详见列[表渲染教程](../guide/basic/list-render.md)
 :::
 
 `wx:for` 的详细用法可以通过以下链接查看教程详细说明。
 
-**参考：** [列表渲染 - wx:for](../guide/basic/list-render.html)
+**参考：** [列表渲染 - wx:for](../guide/basic/list-render.md)
 
 ## wx:for-index
 
@@ -139,7 +139,7 @@ createComponent({
 })
 ```
 
-**参考：** [列表渲染 - wx:for-index](../guide/basic/list-render.html)
+**参考：** [列表渲染 - wx:for-index](../guide/basic/list-render.md)
 
 ## wx:for-item
 
@@ -157,7 +157,7 @@ createComponent({
 </view>
 ```
 
-**参考：** [列表渲染 - wx:for-item](../guide/basic/list-render.html)
+**参考：** [列表渲染 - wx:for-item](../guide/basic/list-render.md)
 
 ## wx:key
 
@@ -176,13 +176,13 @@ createComponent({
 </view>
 ```
 
-**参考：** [列表渲染 - wx:for](../guide/basic/list-render.html)
+**参考：** [列表渲染 - wx:for](../guide/basic/list-render.md)
 
 ## wx:class
 
 绑定HTML Class: 类似vue的class绑定
 
-#对象用法
+# 对象用法 {#object-usage}
 
   我们可以传给 `wx:class` 一个对象，以动态地切换 class：
 
@@ -256,7 +256,7 @@ createComponent({
   </view>
   ```
 
-#数组用法
+# 数组用法 {#array-usage}
 
   我们可以把一个数组传给 `wx:class`，以应用一个 class 列表：
 
@@ -287,7 +287,7 @@ createComponent({
   </view>
   ```
 
-**参考：** [类名样式绑定 - 类名绑定](../guide/basic/class-style-binding.html#类名绑定)
+**参考：** [类名样式绑定 - 类名绑定](../guide/basic/class-style-binding.md#class-binding)
 
 ## wx:style
 
@@ -345,7 +345,7 @@ createComponent({
 </view>
 ```
 
-**参考：** [类名样式绑定 - 样式绑定](../guide/basic/class-style-binding.html#样式绑定)
+**参考：** [类名样式绑定 - 样式绑定](../guide/basic/class-style-binding.md#style-binding)
 
 ## wx:model
 
@@ -379,7 +379,7 @@ wx:model并不会影响相关的事件处理函数，比如像下面这样：
 <input wx:model="{{inputValue}}" bindinput="handleInput"/>
 ```
 
-**参考：** [双向绑定](../guide/basic/two-way-binding.html)
+**参考：** [双向绑定](../guide/basic/two-way-binding.md)
 
 ## wx:model-prop
 
@@ -451,8 +451,10 @@ wx:model 默认监听 `input` 事件，可以使用 `wx:model-event` 定义 wx:m
 
 ## wx:model-value-path
 
-指定 wx:model 双向绑定时的取值路径；
-并非所有的组件都会按微信的标注格式 `event.detail.value` 来传值，例如 vant 的 input 组件，值是通过抛出 `event.detail` 本身传递的，这时我们可以使用 `wx:model-value-path="[]"` 重新指定取值路径。
+定义了 `wx:model` 双向绑定时从 `event.detail` 中获取更新值的访问路径。
+默认值为 `value`，即通过 `event.detail.value` 获取更新值。
+
+并非所有的组件都会按微信的标准格式 `event.detail.value` 来传值，例如 vant 的 input 组件，值是通过抛出 `event.detail` 本身传递的，这时我们可以设置 `wx:model-value-path="[]"` 直接将 `event.detail` 作为更新值。
 
 ```html
 <vant-field wx:model-value-path="[]" wx:model="{{a}}"></vant-field>
@@ -536,7 +538,7 @@ Mpx提供了 `wx:ref=xxx` 来更方便获取 WXML 节点信息的对象。在JS�
   </script>
 ```
 
-**参考：** [获取组件实例 - wx:ref](../guide/basic/refs.html)
+**参考：** [获取组件实例 - wx:ref](../guide/basic/refs.md)
 
 ## wx:show
 
@@ -587,7 +589,7 @@ Page({
 
 Mpx做了增强的**内联传参**能力以及具体有哪些事件**类型**参考下方
 
-**参考：** [事件处理 - bind](../guide/basic/event.html)
+**参考：** [事件处理 - bind](../guide/basic/event.md)
 
 ## catch
 
@@ -635,7 +637,7 @@ Page({
 // middle
 ```
 
-**参考：** [事件处理 - catch](../guide/basic/event.html)
+**参考：** [事件处理 - catch](../guide/basic/event.md)
 
 ## capture-bind
 
@@ -656,7 +658,7 @@ capture-bind要在bind之前执行，是因为事件是先捕获后冒泡，**�
 
 点击inner view的调用顺序是(handleTap)2、4、3、1
 
-**参考：** [事件处理 - capture-bind](../guide/basic/event.html)
+**参考：** [事件处理 - capture-bind](../guide/basic/event.md)
 
 ## capture-catch
 
@@ -677,89 +679,67 @@ capture-catch中断捕获阶段和取消冒泡阶段
 
 点击inner view仅执行handleTap2
 
-**参考：** [事件处理 - capture-catch](../guide/basic/event.html)
+**参考：** [事件处理 - capture-catch](../guide/basic/event.md)
 
 
 ## @mode
 
+`@mode` 只负责按目标平台筛选节点或属性。命中后仍继承资源的 `srcMode` 并执行正常的平台转换；若内容是完整的目标平台原生语法，请使用 SFC 区块 `src-mode` 或资源级 `srcModeRules` 声明源码方言。
+
 `type mode = 'wx' | 'ali' | 'qq' | 'swan' | 'tt' | 'web' | 'qa' | 'ios' | 'android' | 'harmony'`
 
-### 属性中使用
+### 属性中使用 {#use-in-attribute}
 跨平台输出场景下，Mpx 框架允许用户在组件上使用 @ 和 | 符号来指定某个节点或属性只在某些平台下有效。
 
 ```html
-<button
-  open-type@wx|swan|ios="getUserInfo"
-  bindgetuserinfo@wx|swan|ios="getUserInfo"
-  open-type@ali|ios="getAuthorize"
-  scope@ali="userInfo"
-  enable-background@ios|android="{{ true }}"
-  onTap@ali="onTap">
-  获取用户信息
-</button>
+<view
+  class@wx="wechat"
+  class@ali="alipay"
+  bindtap@wx|ali="handleTap">
+  平台差异内容
+</view>
 ```
 例如在上述示例中：
-* 在支付宝小程序与微信和百度小程序等平台分别生效的 open-type 等属性
-* 在输出iOS或android平台时，enable-background 属性生效
-* 以及事件绑定或其他属性灵活的进行条件编译
+
+* 输出微信小程序时保留 `class="wechat"` 和 `bindtap="handleTap"`
+* 输出支付宝小程序时保留 `class="alipay"`，并将命中的 `bindtap` 按照资源 `srcMode` 正常转换为 `onTap`
 
 假设当前 srcMode 为 wx，目标平台为 ali，则输出产物为：
 ```html
-<button
-  open-type="getAuthorize"
-  scope="userInfo"
-  onTap="onTap">
-  获取用户信息
-</button>
-```
-假设当前 srcMode 为 wx，目标平台为 ios，则输出产物为：
-```html
-<button
-  open-type="getAuthorize"
-  bindgetuserinfo="getUserInfo"
-  open-type="getAuthorize"
-  enable-background="{{ true }}"
-  >
-  获取用户信息
-</button>
+<view class="alipay" onTap="handleTap">
+  平台差异内容
+</view>
 ```
 
-### 节点中使用
+### 节点中使用 {#use-in-node}
 同时，该指令也可以作用在单个节点上，来对节点进行跨平台条件判断。
 
-但需要注意的是，该指令作用在单个节点时，节点仅在目标平台输出，同时节点自身属性不会进行跨平台语法转换，不过其子节点不受影响。
+`@mode` 只负责筛选节点。节点命中后会继承资源 `srcMode`，节点自身及其子节点都会执行正常的平台语法转换，条件属性不会保留在输出中。
 
 ```html
-<!--当srcMode为wx，跨平台输出ali时-->
-<!--错误写法-->
-<view @ali bindtap="someClick">
-    <view wx:if="{{flag}}">text</view>
+<!-- srcMode 为 wx、输出 ali 时的源码 -->
+<view @ali bindtap="otherClick">
+  <view bindtap="someClick">tap click</view>
 </view>
-<!--正确写法-->
-<view @ali onTap="someClick">
-    <view wx:if="{{flag}}">text</view>
+
+<!-- 输出 ali 产物 -->
+<view onTap="otherClick">
+  <view onTap="someClick">tap click</view>
 </view>
 ```
-::: danger
-另外在跨端输出 React Native 和 H5 时，不要在基础组件节点上使用 @mode 指令，仅可在自定义组件节点使用 @mode 指令
-:::
-```html
-<!--错误写法-->
-<view @ios>测试数据</view>
-```
+
+跨端输出 React Native 和 Web 时，基础组件和自定义组件节点都可以使用 `@mode`。其中基础组件仍会按照资源 `srcMode` 进入正常转换；完整 RN 原生模板需通过 SFC 区块 `src-mode` 或资源级 `srcModeRules` 声明源码方言。
 
 ## @_mode
 
 `type _mode = '_wx' | '_ali' | '_qq' | '_swan' | '_tt' | '_web' | '_qa' ｜ '_ios' | '_android' | '_harmony'`
 
-有时开发者期望使用 @mode 这种方式仅控制节点的展示，保留节点属性的平台转换能力，为此 Mpx 实现了一个隐式属性条件编译能力。
+`@_mode` 是 `@mode` 的兼容别名，两者筛选和转换行为完全一致。新代码建议使用 `@mode`。
+
 ```html
-<!--srcMode为 wx，输出 ali 时，bindtap 会被正常转换为 onTap-->
+<!-- 与 <view @ali bindtap="someClick">test</view> 行为一致 -->
 <view @_ali bindtap="someClick">test</view>
 ```
-在对应的平台前加一个_，例如@_ali、@_swan、@_tt等，使用该隐式规则仅有条件编译能力，节点属性语法转换能力依旧。
-
-在跨端输出 React Native 和 H5 时，可以在节点上使用该属性。
 
 ## @env
 
@@ -767,7 +747,7 @@ capture-catch中断捕获阶段和取消冒泡阶段
 
 跨平台输出场景下，除了 mode 平台场景值，Mpx 框架还提供自定义 env 目标应用，来实现在不同应用下编译产出不同的代码。
 
-关于 env 的详细介绍可以点击[查看](../guide/advance/platform.html#use-env)
+关于 env 的详细介绍可以点击[查看](../guide/advance/platform.md#use-env)
 
 跨平台输出使用 env 与 mode 一样支持文件纬度、区块纬度、节点纬度、属性纬度等条件编译，这里我们仅介绍下节点和属性纬度的指令模式使用，env 与 mode 可以组合使用。
 
@@ -808,4 +788,3 @@ env 也可在单个节点上进行条件编译：
 ```html
 <view mpxTagName@swan="cover-view">will be cover-view in swan</view>
 ```
-

@@ -1,0 +1,137 @@
+{
+  "policy": "mpx: current input + mpx snapshot + own outputs; noskill: current input + own outputs",
+  "isolation": "gated file tools and CLI context/tool configuration; not an OS filesystem jail",
+  "completed": 16,
+  "passed": 16,
+  "runs": [
+    {
+      "eval_id": 0,
+      "group": "mpx",
+      "policy_valid": true,
+      "unique_files_read": 32,
+      "delivered_files_verified_unchanged": 9,
+      "connection_error_count": 0
+    },
+    {
+      "eval_id": 0,
+      "group": "noskill",
+      "policy_valid": true,
+      "unique_files_read": 12,
+      "delivered_files_verified_unchanged": 11,
+      "connection_error_count": 0
+    },
+    {
+      "eval_id": 1,
+      "group": "mpx",
+      "policy_valid": true,
+      "unique_files_read": 43,
+      "delivered_files_verified_unchanged": 11,
+      "connection_error_count": 0
+    },
+    {
+      "eval_id": 1,
+      "group": "noskill",
+      "policy_valid": true,
+      "unique_files_read": 6,
+      "delivered_files_verified_unchanged": 5,
+      "connection_error_count": 1
+    },
+    {
+      "eval_id": 2,
+      "group": "mpx",
+      "policy_valid": true,
+      "unique_files_read": 37,
+      "delivered_files_verified_unchanged": 6,
+      "connection_error_count": 0
+    },
+    {
+      "eval_id": 2,
+      "group": "noskill",
+      "policy_valid": true,
+      "unique_files_read": 4,
+      "delivered_files_verified_unchanged": 4,
+      "connection_error_count": 1
+    },
+    {
+      "eval_id": 3,
+      "group": "mpx",
+      "policy_valid": true,
+      "unique_files_read": 33,
+      "delivered_files_verified_unchanged": 3,
+      "connection_error_count": 0
+    },
+    {
+      "eval_id": 3,
+      "group": "noskill",
+      "policy_valid": true,
+      "unique_files_read": 5,
+      "delivered_files_verified_unchanged": 4,
+      "connection_error_count": 0
+    },
+    {
+      "eval_id": 4,
+      "group": "mpx",
+      "policy_valid": true,
+      "unique_files_read": 43,
+      "delivered_files_verified_unchanged": 11,
+      "connection_error_count": 0
+    },
+    {
+      "eval_id": 4,
+      "group": "noskill",
+      "policy_valid": true,
+      "unique_files_read": 9,
+      "delivered_files_verified_unchanged": 13,
+      "connection_error_count": 0
+    },
+    {
+      "eval_id": 5,
+      "group": "mpx",
+      "policy_valid": true,
+      "unique_files_read": 36,
+      "delivered_files_verified_unchanged": 12,
+      "connection_error_count": 0
+    },
+    {
+      "eval_id": 5,
+      "group": "noskill",
+      "policy_valid": true,
+      "unique_files_read": 6,
+      "delivered_files_verified_unchanged": 10,
+      "connection_error_count": 0
+    },
+    {
+      "eval_id": 6,
+      "group": "mpx",
+      "policy_valid": true,
+      "unique_files_read": 32,
+      "delivered_files_verified_unchanged": 14,
+      "connection_error_count": 0
+    },
+    {
+      "eval_id": 6,
+      "group": "noskill",
+      "policy_valid": true,
+      "unique_files_read": 12,
+      "delivered_files_verified_unchanged": 15,
+      "connection_error_count": 0
+    },
+    {
+      "eval_id": 7,
+      "group": "mpx",
+      "policy_valid": true,
+      "unique_files_read": 34,
+      "delivered_files_verified_unchanged": 20,
+      "connection_error_count": 0
+    },
+    {
+      "eval_id": 7,
+      "group": "noskill",
+      "policy_valid": true,
+      "unique_files_read": 8,
+      "delivered_files_verified_unchanged": 12,
+      "connection_error_count": 0
+    }
+  ],
+  "raw_evidence_removed": true
+}

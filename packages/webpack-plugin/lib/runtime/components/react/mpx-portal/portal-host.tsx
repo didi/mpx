@@ -1,16 +1,15 @@
-import { useEffect, useRef, ReactNode, useMemo, useContext } from 'react'
+import { useEffect, useRef, useMemo, ReactNode } from 'react'
 import {
   View,
-  DeviceEventEmitter,
-  NativeEventEmitter,
   StyleSheet
 } from 'react-native'
+import { getFocusedNavigation } from '@mpxjs/utils'
 import PortalManager from './portal-manager'
-import { PortalContext, RouteContext } from '../context'
+import { PortalContext } from '../context'
 
 type PortalHostProps = {
-  children: ReactNode,
-  pageId: number
+  children: ReactNode
+  id?: HostId
 }
 
 interface PortalManagerContextValue {
@@ -19,17 +18,14 @@ interface PortalManagerContextValue {
   unmount: (key: number) => void
 }
 
-export type Operation =
-  | { type: 'mount'; key: number; children: ReactNode }
-  | { type: 'update'; key: number; children: ReactNode }
-  | { type: 'unmount'; key: number }
+// 页面 Host 传入 pageId，独立 Host 默认使用 symbol。
+type HostId = number | symbol
 
-// events
-const addType = 'MPX_RN_ADD_PORTAL'
-const removeType = 'MPX_RN_REMOVE_PORTAL'
-const updateType = 'MPX_RN_UPDATE_PORTAL'
-// fix react native web does not support DeviceEventEmitter
-const TopViewEventEmitter = DeviceEventEmitter || new NativeEventEmitter()
+interface PortalEntry {
+  id: HostId | null
+  children: ReactNode
+  onBind?: (pageId: number) => void
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -39,18 +35,56 @@ const styles = StyleSheet.create({
 
 class PortalGuard {
   private nextKey = 10000
-  add = (e: ReactNode, id: number|null) => {
+  private hosts = new Map<HostId, PortalManagerContextValue>()
+  private portals = new Map<number, PortalEntry>()
+
+  add = (children: ReactNode, id?: HostId | null, onBind?: (pageId: number) => void) => {
+    id = id ?? this.getPageId() ?? null
     const key = this.nextKey++
-    TopViewEventEmitter.emit(addType, e, key, id)
+    this.portals.set(key, { id, children, onBind })
+    if (id != null) this.hosts.get(id)?.mount(key, children)
     return key
   }
 
   remove = (key: number) => {
-    TopViewEventEmitter.emit(removeType, key)
+    const item = this.portals.get(key)
+    if (!item) return
+    this.portals.delete(key)
+    if (item.id != null) this.hosts.get(item.id)?.unmount(key)
   }
 
-  update = (key: number, e: ReactNode) => {
-    TopViewEventEmitter.emit(updateType, key, e)
+  update = (key: number, children: ReactNode) => {
+    const item = this.portals.get(key)
+    if (!item) return
+    item.children = children
+    if (item.id != null) this.hosts.get(item.id)?.update(key, children)
+  }
+
+  getPageId = (key?: number): number | null | undefined => {
+    if (key != null) {
+      const id = this.portals.get(key)?.id
+      return typeof id === 'symbol' ? undefined : id
+    }
+    return getFocusedNavigation()?.pageId ?? Array.from(this.hosts.keys()).find((id): id is number => typeof id === 'number') ?? null
+  }
+
+  register = (id: HostId, manager: PortalManagerContextValue) => {
+    this.hosts.set(id, manager)
+    this.portals.forEach((item, key) => {
+      // 没有页面时发起的请求只交给第一个注册的页面。
+      if (item.id === null && typeof id === 'number') {
+        item.id = id
+        item.onBind?.(id)
+      }
+      if (item.id === id) manager.mount(key, item.children)
+    })
+    return () => {
+      if (this.hosts.get(id) !== manager) return
+      this.hosts.delete(id)
+      this.portals.forEach((item, key) => {
+        if (item.id === id) this.portals.delete(key)
+      })
+    }
   }
 }
 /**
@@ -58,76 +92,19 @@ class PortalGuard {
  */
 export const portal = new PortalGuard()
 
-const PortalHost = ({ children } :PortalHostProps): JSX.Element => {
-  const _nextKey = useRef(0)
+const PortalHost = ({ children, id } :PortalHostProps): JSX.Element => {
   const manager = useRef<PortalManagerContextValue | null>(null)
-  const queue = useRef<Array<{ type: string, key: number; children: ReactNode }>>([])
-  const { pageId } = useContext(RouteContext) || {}
-  const mount = (children: ReactNode, _key?: number, id?: number|null) => {
-    if (id !== pageId) return
-    const key = _key || _nextKey.current++
-    if (manager.current) {
-      manager.current.mount(key, children)
-    } else {
-      queue.current.push({ type: 'mount', key, children })
-    }
-    return key
-  }
-
-  const unmount = (key: number) => {
-    if (manager.current) {
-      manager.current.unmount(key)
-    } else {
-      queue.current.push({ type: 'unmount', key, children })
-    }
-  }
-
-  const update = (key: number, children?: ReactNode) => {
-    if (manager.current) {
-      manager.current.update(key, children)
-    } else {
-      const operation = { type: 'mount', key, children }
-      const index = queue.current.findIndex((q) => q.type === 'mount' && q.key === key)
-      if (index > -1) {
-        queue.current[index] = operation
-      } else {
-        queue.current.push(operation)
-      }
-    }
-  }
-  const subScriptions = useMemo(() => {
-    return [
-      TopViewEventEmitter.addListener(addType, mount),
-      TopViewEventEmitter.addListener(removeType, unmount),
-      TopViewEventEmitter.addListener(updateType, update)
-    ]
-  }, [])
+  // id 在本次 Host 挂载期间保持不变。
+  const hostId = useMemo(() => id ?? Symbol('portal-host'), [])
   useEffect(() => {
-    while (queue.current.length && manager.current) {
-      const operation = queue.current.shift()
-      if (!operation) return
-      switch (operation.type) {
-        case 'mount':
-          manager.current.mount(operation.key, operation.children)
-          break
-        case 'unmount':
-          manager.current.unmount(operation.key)
-          break
-      }
-    }
-
-    return () => {
-      subScriptions.forEach((subScription:any) => {
-        subScription.remove()
-      })
-    }
+    if (manager.current) return portal.register(hostId, manager.current)
   }, [])
   return (
     <PortalContext.Provider
       value={{
-        mount,
-        update,
-        unmount
+        mount: (children) => portal.add(children, hostId),
+        update: portal.update,
+        unmount: portal.remove
       }}
       >
       <View style={styles.container} collapsable={false}>

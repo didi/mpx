@@ -16,12 +16,3 @@ export const usePickerViewColumnAnimationContext = () => {
   }
   return value
 }
-
-export const PickerViewStyleContext = createContext<
-    Record<string, any> | undefined
->(undefined)
-
-export const usePickerViewStyleContext = () => {
-  const value = useContext(PickerViewStyleContext)
-  return value
-}

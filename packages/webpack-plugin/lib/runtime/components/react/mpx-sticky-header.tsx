@@ -2,7 +2,7 @@ import { useEffect, useRef, useContext, forwardRef, useMemo, createElement, Reac
 import { Animated, StyleSheet, View, NativeSyntheticEvent, ViewStyle, LayoutChangeEvent, useAnimatedValue } from 'react-native'
 import { ScrollViewContext, StickyContext } from './context'
 import useNodesRef, { HandlerRef } from './useNodesRef'
-import { splitProps, splitStyle, useTransformStyle, wrapChildren, useLayout, extendObject } from './utils'
+import { splitProps, splitStyle, useTransformStyle, wrapChildren, useLayout, extendObject, useTextPassThrough } from './utils'
 import { error } from '@mpxjs/utils'
 import useInnerProps, { getCustomEvent } from './getInnerListeners'
 
@@ -11,9 +11,8 @@ interface StickyHeaderProps {
   style?: ViewStyle;
   padding?: [number, number, number, number];
   'offset-top'?: number;
-  'enable-var'?: boolean;
-  'external-var-context'?: Record<string, any>;
-  'parent-font-size'?: number;
+  'enable-var'?: boolean | 'use';
+  'enable-text-pass-through'?: boolean;
   'parent-width'?: number;
   'parent-height'?: number;
   bindstickontopchange?: (e: NativeSyntheticEvent<unknown>) => void;
@@ -27,15 +26,13 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
     padding = [0, 0, 0, 0],
     'offset-top': offsetTop = 0,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
-    'parent-font-size': parentFontSize,
+    'enable-text-pass-through': enableTextPassThrough,
     'parent-width': parentWidth,
     'parent-height': parentHeight
   } = props
 
-  const scrollViewContext = useContext(ScrollViewContext)
+  const { scrollOffset, gestureRef: scrollViewRef } = useContext(ScrollViewContext)
   const stickyContext = useContext(StickyContext)
-  const { scrollOffset } = scrollViewContext
   const { registerStickyHeader, unregisterStickyHeader } = stickyContext
   const headerRef = useRef<View>(null)
   const isStickOnTopRef = useRef(false)
@@ -44,22 +41,23 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
   const {
     normalStyle,
     hasVarDec,
-    varContextRef,
+    varContext,
     hasSelfPercent,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(style, { enableVar, parentWidth, parentHeight })
 
   const { layoutRef, layoutProps } = useLayout({ props, hasSelfPercent, setWidth, setHeight, nodeRef: headerRef, onLayout })
 
   const { textStyle, innerStyle = {} } = splitStyle(normalStyle)
+  const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
 
   const headerTopAnimated = useAnimatedValue(0)
   // harmony animatedValue 不支持通过 _value 访问
   const headerTopRef = useRef(0)
 
   useEffect(() => {
-    registerStickyHeader({ key: id, updatePosition })
+    registerStickyHeader({ id, updatePosition })
     return () => {
       unregisterStickyHeader(id)
     }
@@ -67,7 +65,6 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
 
   function updatePosition () {
     if (headerRef.current) {
-      const scrollViewRef = scrollViewContext.gestureRef
       if (scrollViewRef && scrollViewRef.current) {
         headerRef.current.measureLayout(
           scrollViewRef.current,
@@ -95,7 +92,7 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
   })
 
   useEffect(() => {
-    if (!bindstickontopchange) return
+    if (!bindstickontopchange || !scrollOffset) return
 
     const listener = scrollOffset.addListener((state: { value: number }) => {
       const currentScrollValue = state.value
@@ -115,29 +112,31 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
     return () => {
       scrollOffset.removeListener(listener)
     }
-  }, [])
+  }, [bindstickontopchange, scrollOffset])
 
   const animatedStyle = useMemo(() => {
-    const translateY = Animated.subtract(scrollOffset, headerTopAnimated).interpolate({
-      inputRange: [0, 1],
-      outputRange: [0, 1],
-      extrapolateLeft: 'clamp',
-      extrapolateRight: 'extend'
-    })
+    if (scrollOffset) {
+      const translateY = Animated.subtract(scrollOffset, headerTopAnimated).interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, 1],
+        extrapolateLeft: 'clamp',
+        extrapolateRight: 'extend'
+      })
 
-    const finalTranslateY = offsetTop === 0
-      ? translateY
-      : Animated.add(
-        translateY,
-        Animated.subtract(scrollOffset, headerTopAnimated).interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, offsetTop],
-          extrapolate: 'clamp'
-        })
-      )
+      const finalTranslateY = offsetTop === 0
+        ? translateY
+        : Animated.add(
+          translateY,
+          Animated.subtract(scrollOffset, headerTopAnimated).interpolate({
+            inputRange: [0, 1],
+            outputRange: [0, offsetTop],
+            extrapolate: 'clamp'
+          })
+        )
 
-    return {
-      transform: [{ translateY: finalTranslateY }]
+      return {
+        transform: [{ translateY: finalTranslateY }]
+      }
     }
   }, [scrollOffset, headerTopAnimated, offsetTop])
 
@@ -149,19 +148,22 @@ const _StickyHeader = forwardRef<HandlerRef<View, StickyHeaderProps>, StickyHead
       paddingBottom: padding[2] || 0,
       paddingLeft: padding[3] || 0
     })
-  }, layoutProps), [], { layoutRef })
+  }, layoutProps), [
+    'padding',
+    'offset-top',
+    'bindstickontopchange'
+  ], { layoutRef })
 
   return (
     createElement(
       Animated.View,
       innerProps,
       wrapChildren(
-        props,
+        props.children,
         {
           hasVarDec,
-          varContext: varContextRef.current,
-          textStyle,
-          textProps
+          varContext,
+          textPassThrough
         }
       )
     )

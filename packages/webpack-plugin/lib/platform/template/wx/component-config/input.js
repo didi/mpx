@@ -12,6 +12,8 @@ module.exports = function ({ print }) {
   const webPropLog = print({ platform: 'web', tag: TAG_NAME, isError: false })
   const webEventLog = print({ platform: 'web', tag: TAG_NAME, isError: false, type: 'event' })
   const webValueLog = print({ platform: 'web', tag: TAG_NAME, isError: false, type: 'value' })
+  const ksPropLog = print({ platform: 'ks', tag: TAG_NAME, isError: false })
+  const ksEventLog = print({ platform: 'ks', tag: TAG_NAME, isError: false, type: 'event' })
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
   const iosValueLogError = print({ platform: 'ios', tag: TAG_NAME, isError: true, type: 'value' })
   const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
@@ -91,12 +93,6 @@ module.exports = function ({ print }) {
         }
       },
       {
-        test: /^(password|auto-focus|focus|cursor|selection-start|selection-end|use-built-in)$/,
-        web (prop, { el }) {
-          el.isBuiltIn = true
-        }
-      },
-      {
         test: /^(placeholder-style|placeholder-class|cursor-spacing|confirm-type|confirm-hold|adjust-position|hold-keyboard)$/,
         web: webPropLog
       },
@@ -105,10 +101,14 @@ module.exports = function ({ print }) {
         qa: qaPropLog
       },
       {
-        test: /^(always-embed|hold-keyboard|safe-password-.+)$/,
+        test: /^(always-embed|safe-password-.+)$/,
         ios: iosPropLog,
         android: androidPropLog,
         harmony: harmonyPropLog
+      },
+      {
+        test: /^(cursor-spacing|always-embed|cursor|selection-start|selection-end|adjust-position|hold-keyboard|safe-password-cert-path|safe-password-length|safe-password-time-stamp|safe-password-nonce|safe-password-salt|safe-password-custom-hash|placeholder-class)$/,
+        ks: ksPropLog
       }
     ],
     event: [
@@ -129,6 +129,10 @@ module.exports = function ({ print }) {
         ios: iosEventLog,
         android: androidEventLog,
         harmony: harmonyEventLog
+      },
+      {
+        test: /^(change|nicknamereview|selectionchange|keyboardcompositionstart|keyboardcompositionupdate|keyboardcompositionend|onkeyboardheightchange)$/,
+        ks: ksEventLog
       }
     ]
   }

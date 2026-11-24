@@ -6,7 +6,7 @@ title: 首页
 heroText: 增强型跨端小程序框架
 tagline: 良好的开发体验，极致的应用性能，完整的原生兼容，一份源码跨端输出所有小程序平台及Web。
 actionText: 快速进入
-actionLink: /guide/basic/start.html
+actionLink: /guide/basic/intro.html
 githubText: Github
 githubLink: https://github.com/didi/mpx
 features:
@@ -59,7 +59,7 @@ fourSection:
   mimg: https://dpubstatic.udache.com/static/dpubimg/G4RXehQ40n/y_pic_jizhi.png
   bg: https://gift-static.hongyibo.com.cn/static/kfpub/3547/jizhi_bg_v3.png
   actionText: 点击进入
-  actionLink: /guide/basic/start.html
+  actionLink: /articles/performance.html
 fiveSection:
   title: 渐进迁移
   details: 同样得益于增强的设计思路，Mpx 能够完整兼容小程序原生技术规范，并以较低的成本进行持续跟进；借助框架提供的渐进迁移能力，小程序开发者可以方便地在 Mpx 项目中使用已有的原生开发生态，如组件库，统计工具等，同时也能将 Mpx 开发的组件输出到原生小程序项目中使用。
@@ -67,7 +67,7 @@ fiveSection:
   mimg: https://dpubstatic.udache.com/static/dpubimg/Z0W_MvwJ8C/y_pic_jianjin.png
   bg: https://gift-static.hongyibo.com.cn/static/kfpub/3547/jianjin_bg_v3.png
   actionText: 点击进入
-  actionLink: /guide/basic/start.html
+  actionLink: /guide/advance/progressive.html
 sixSection:
   title: 开发生态
   mtitle: 开发生态
@@ -76,33 +76,33 @@ sixSection:
   - title: '@mpxjs/core'
     details: 运行时核心
     icon: https://dpubstatic.udache.com/static/dpubimg/K4XYVLjBLH/kaifa_icon_1.png
-    actionLink: /guide/basic/start.html
+    actionLink: https://www.npmjs.com/package/@mpxjs/core
   - title: '@mpxjs/webpack-plugin'
     details: 编译核心
     icon: https://dpubstatic.udache.com/static/dpubimg/2k0jC-ZkFX/kaifa_icon_2.png
-    actionLink: /guide/basic/start.html
+    actionLink: https://www.npmjs.com/package/@mpxjs/webpack-plugin
   - title: '@mpxjs/cli'
     details: 脚手架工具
     icon: https://dpubstatic.udache.com/static/dpubimg/ug3MOMmXaz/kaifa_icon_3.png
-    actionLink: /guide/basic/start.html
+    actionLink: https://github.com/mpx-ecology/mpx-cli
   - title: '@mpxjs/fetch'
     details: 网络请求库
     icon: https://dpubstatic.udache.com/static/dpubimg/L6kO_akb2G/kaifa_icon_4.png
-    actionLink: /api/extend.html#mpx-fetch
+    actionLink: /guide/extend/fetch.html
   - title: '@mpxjs/api-proxy api'
-    details: 增强调用
+    details: 环境API
     icon: https://dpubstatic.udache.com/static/dpubimg/oZGOmLr5f3/kaifa_icon_5.png
-    actionLink: /api/extend.html#api-proxy
+    actionLink: /api-proxy/index.html
   - title: '@mpxjs/webview-bridge web'
-    details: 页面桥接
+    details: Webview桥
     icon: https://dpubstatic.udache.com/static/dpubimg/trdVxyR_5_/kaifa_icon_6.png
-    actionLink: /api/extend.html#webview-bridge
+    actionLink: /guide/extend/webview-bridge.html
   - title: 'Mpx language tools'
-    details: IDE 插件等语言工具
+    details: IDE 插件
     icon: https://dpubstatic.udache.com/static/dpubimg/PczNH3wywM/kaifa_icon_7.png
     actionLink: https://github.com/mpx-ecology/language-tools
   - title: '@mpxjs/es-check'
-    details: 高级语法检查
+    details: 语法兼容检测
     icon: https://dpubstatic.udache.com/static/dpubimg/qXb0ZEY4xN/kaifa_icon_8.png
     actionLink: https://github.com/mpx-ecology/mpx-es-check
   - title: '@mpxjs/size-report'
@@ -266,7 +266,7 @@ communityList:
 helpList:
   title: 帮助
   details:
-  - title: 反馈问题
+  - title: 问题反馈
     actionLink: https://github.com/didi/mpx/issues
 moreList:
   title: 更多

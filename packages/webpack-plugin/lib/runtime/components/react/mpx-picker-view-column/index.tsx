@@ -1,11 +1,12 @@
 import React, { forwardRef, useRef, useState, useMemo, useEffect, useCallback, createElement } from 'react'
 import { GestureResponderEvent, LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleSheet, View } from 'react-native'
 import Reanimated, { AnimatedRef, useAnimatedRef, useScrollViewOffset } from 'react-native-reanimated'
-import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious, isAndroid, isIOS, isHarmony, extendObject } from '../utils'
+import { useTransformStyle, splitStyle, splitProps, useLayout, usePrevious, isAndroid, isIOS, isHarmony, extendObject, useTextPassThrough, wrapChildren } from '../utils'
 import useNodesRef, { HandlerRef } from '../useNodesRef'
 import PickerIndicator from './pickerViewIndicator'
 import PickerMask from './pickerViewMask'
-import MpxPickerVIewColumnItem from './pickerViewColumnItem'
+import MpxPickerViewColumnItem from './pickerViewColumnItem'
+import MpxPickerViewColumnItemLite from './pickerViewColumnItemLite'
 import { PickerViewColumnAnimationContext } from '../mpx-picker-view/pickerVIewContext'
 import { calcHeightOffsets } from './pickerViewFaces'
 
@@ -17,14 +18,15 @@ interface ColumnProps {
   style: {
     [key: string]: any
   }
-  'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
+  'enable-var'?: boolean | 'use'
   wrapperStyle: {
     height: number
     itemHeight: number
   }
   pickerMaskStyle: Record<string, any>
   pickerIndicatorStyle: Record<string, any>
+  enableWheelAnimation?: boolean
+  'enable-text-pass-through'?: boolean
 }
 
 const visibleCount = 5
@@ -39,18 +41,23 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     wrapperStyle,
     pickerMaskStyle,
     pickerIndicatorStyle,
+    enableWheelAnimation = true,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext
+    'enable-text-pass-through': enableTextPassThrough
+
   } = props
 
   const {
     normalStyle,
+    hasVarDec,
+    varContext,
     hasSelfPercent,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, externalVarContext })
-  const { textStyle = {} } = splitStyle(normalStyle)
-  const { textProps = {} } = splitProps(props)
+  } = useTransformStyle(style, { enableVar })
+  const { textStyle } = splitStyle(normalStyle)
+  const { textProps } = splitProps(props)
+  const textPassThrough = useTextPassThrough(textStyle, textProps, { enableTextPassThrough })
   const scrollViewRef = useAnimatedRef<Reanimated.ScrollView>()
   const offsetYShared = useScrollViewOffset(scrollViewRef as AnimatedRef<Reanimated.ScrollView>)
 
@@ -59,14 +66,14 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   })
 
   const { height: pickerH, itemHeight } = wrapperStyle
-  const [itemRawH, setItemRawH] = useState(itemHeight)
+  const [itemRawH, setItemRawH] = useState(Math.round(itemHeight))
   const maxIndex = useMemo(() => columnData.length - 1, [columnData])
   const prevScrollingInfo = useRef({ index: initialIndex, y: 0 })
   const dragging = useRef(false)
   const scrolling = useRef(false)
-  const timerResetPosition = useRef<NodeJS.Timeout | null>(null)
-  const timerScrollTo = useRef<NodeJS.Timeout | null>(null)
-  const timerClickOnce = useRef<NodeJS.Timeout | null>(null)
+  const timerResetPosition = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const timerScrollTo = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const timerClickOnce = useRef<ReturnType<typeof setTimeout> | null>(null)
   const activeIndex = useRef(initialIndex)
   const prevIndex = usePrevious(initialIndex)
   const prevMaxIndex = usePrevious(maxIndex)
@@ -82,8 +89,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   })
 
   const paddingHeight = useMemo(
-    () => Math.round((pickerH - itemHeight) / 2),
-    [pickerH, itemHeight]
+    () => (pickerH - itemRawH) / 2,
+    [pickerH, itemRawH]
   )
 
   const snapToOffsets = useMemo(
@@ -94,6 +101,11 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
   const contentContainerStyle = useMemo(() => {
     return [{ paddingVertical: paddingHeight }]
   }, [paddingHeight])
+
+  const initialContentOffsetY = useMemo(
+    () => initialIndex * itemRawH,
+    [initialIndex, itemRawH]
+  )
 
   const getIndex = useCallback((y: number) => {
     const calc = Math.round(y / itemRawH)
@@ -128,6 +140,16 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     }
   }, [])
 
+  // `contentOffset` prop sets visual position but does not fire scroll events,
+  // so `offsetYShared` (from `useScrollViewOffset`) stays at 0 until the user scrolls.
+  // Directly sync it whenever `itemRawH` is established so wheel animation renders correctly.
+  useEffect(() => {
+    if (!itemRawH || dragging.current || scrolling.current) {
+      return
+    }
+    offsetYShared.value = activeIndex.current * itemRawH
+  }, [itemRawH])
+
   useEffect(() => {
     if (
       !scrollViewRef.current ||
@@ -152,24 +174,20 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
     }, isIOS ? 0 : 200)
   }, [itemRawH, maxIndex, initialIndex])
 
-  const onContentSizeChange = useCallback((_w: number, h: number) => {
-    const y = initialIndex * itemRawH
-    if (y <= h) {
-      clearTimerScrollTo()
-      timerScrollTo.current = setTimeout(() => {
-        scrollViewRef.current?.scrollTo({ x: 0, y, animated: false })
-        activeIndex.current = initialIndex
-      }, 0)
+  useEffect(() => {
+    const roundedH = Math.round(itemHeight)
+    if (roundedH) {
+      setItemRawH(roundedH)
     }
-  }, [itemRawH, initialIndex])
+  }, [itemHeight])
 
   const onItemLayout = useCallback((e: LayoutChangeEvent) => {
     const { height: rawH } = e.nativeEvent.layout
     const roundedH = Math.round(rawH)
-    if (roundedH && roundedH !== itemRawH) {
+    if (roundedH) {
       setItemRawH(roundedH)
     }
-  }, [itemRawH])
+  }, [])
 
   const resetScrollPosition = useCallback((y: number) => {
     if (dragging.current || scrolling.current) {
@@ -287,18 +305,22 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
 
   const renderInnerchild = () =>
     columnData.map((item: React.ReactElement, index: number) => {
-      return (
-        <MpxPickerVIewColumnItem
+      return enableWheelAnimation
+        ? (<MpxPickerViewColumnItem
           key={index}
           item={item}
           index={index}
-          itemHeight={itemHeight}
-          textStyle={textStyle}
-          textProps={textProps}
+          itemHeight={itemRawH}
           visibleCount={visibleCount}
           onItemLayout={onItemLayout}
-        />
-      )
+        />)
+        : (<MpxPickerViewColumnItemLite
+          key={index}
+          item={item}
+          index={index}
+          itemHeight={itemRawH}
+          onItemLayout={onItemLayout}
+        />)
     })
 
   const renderScollView = () => {
@@ -320,8 +342,8 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
       onScrollEndDrag,
       onMomentumScrollBegin,
       onMomentumScrollEnd,
-      onContentSizeChange,
-      contentContainerStyle
+      contentContainerStyle,
+      contentOffset: { x: 0, y: initialContentOffsetY }
     }) as React.ComponentProps<typeof Reanimated.ScrollView>
 
     return createElement(
@@ -330,30 +352,34 @@ const _PickerViewColumn = forwardRef<HandlerRef<ScrollView & View, ColumnProps>,
       createElement(
         Reanimated.ScrollView,
         innerProps,
-        renderInnerchild()
+        wrapChildren(renderInnerchild(), {
+          hasVarDec,
+          varContext,
+          textPassThrough
+        })
       )
     )
   }
 
   const renderIndicator = () => (
     <PickerIndicator
-      itemHeight={itemHeight}
+      itemHeight={itemRawH}
       indicatorItemStyle={pickerIndicatorStyle}
     />
   )
 
   const renderMask = () => (
     <PickerMask
-      itemHeight={itemHeight}
+      itemHeight={itemRawH}
       maskContainerStyle={pickerMaskStyle}
     />
   )
 
   return (
     <View style={[styles.wrapper, normalStyle]}>
-        {renderScollView()}
-        {renderMask()}
-        {renderIndicator()}
+      {renderScollView()}
+      {renderMask()}
+      {renderIndicator()}
     </View>
   )
 })

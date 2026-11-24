@@ -1,0 +1,13 @@
+{
+  "name": "mpx2skyline-skill-eval-workspace",
+  "private": true,
+  "scripts": {
+    "compile-validate": "node tools/compile-validate.js --target=wx --project-root=.",
+    "lint": "eslint --ext .js,.ts,.mpx",
+    "update-framework": "npm --prefix .. run update-framework",
+    "check-env": "node ../check-env.cjs"
+  },
+  "vuePlugins": {
+    "resolveFrom": ".."
+  }
+}

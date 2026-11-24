@@ -19,7 +19,7 @@ module.exports = class AddEnvPlugin {
     const envPattern = new RegExp(`\\.${env}(\\.|$)`)
 
     resolver.getHook(this.source).tapAsync('AddEnvPlugin', (request, resolveContext, callback) => {
-      if (request.env) {
+      if (request.__mpxResolvedExtendComponent || request.env) {
         return callback()
       }
       const obj = {

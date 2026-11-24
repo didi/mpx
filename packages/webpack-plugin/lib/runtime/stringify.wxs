@@ -45,7 +45,7 @@ function objectKeys (obj) {
 }
 
 function genRegExp (str, flags) {
-  if (!__mpx_wxs__) {
+  if (!__mpx_wxs__ || __mpx_mode__ === 'ks') {
     return new RegExp(str, flags)
   } else {
     return getRegExp(str, flags)

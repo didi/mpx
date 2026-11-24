@@ -8,7 +8,9 @@ module.exports = function loader (content, prevOptions) {
   const options = prevOptions || loaderUtils.getOptions(this) || {}
   const context = options.context || this.rootContext
   const mpx = this.getMpx()
-  const isRN = ['ios', 'android', 'harmony'].includes(mpx.mode)
+
+  const { mode } = mpx
+  const isRN = ['ios', 'android', 'harmony'].includes(mode)
 
   let url = loaderUtils.interpolateName(this, options.name, {
     context,
@@ -47,6 +49,7 @@ module.exports = function loader (content, prevOptions) {
         ? options.publicPath
         : `${options.publicPath}/`}${url}`
     }
+
     publicPath = JSON.stringify(publicPath)
   }
 

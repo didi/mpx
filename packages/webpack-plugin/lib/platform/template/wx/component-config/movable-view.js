@@ -3,9 +3,9 @@ const TAG_NAME = 'movable-view'
 module.exports = function ({ print }) {
   const aliEventLog = print({ platform: 'ali', tag: TAG_NAME, isError: false, type: 'event' })
   const qaPropLog = print({ platform: 'qa', tag: TAG_NAME, isError: false })
-  const androidPropLog = print({ platform: 'android', tag: TAG_NAME, isError: false })
-  const harmonyPropLog = print({ platform: 'harmony', tag: TAG_NAME, isError: false })
-  const iosPropLog = print({ platform: 'ios', tag: TAG_NAME, isError: false })
+  const ksPropLog = print({ platform: 'ks', tag: TAG_NAME, isError: false })
+  const ksEventLog = print({ platform: 'ks', tag: TAG_NAME, isError: false, type: 'event' })
+
   return {
     test: TAG_NAME,
     web (tag, { el }) {
@@ -27,22 +27,22 @@ module.exports = function ({ print }) {
     props: [
       {
         test: /^(out-of-bounds)$/,
-        ali: qaPropLog,
-        ios: iosPropLog,
-        android: androidPropLog,
-        harmony: harmonyPropLog
+        ali: qaPropLog
+      },
+      {
+        test: /^(inertia)$/,
+        ks: ksPropLog
       },
       {
         test: /^(damping|friction)$/,
-        ios: iosPropLog,
-        android: androidPropLog,
-        harmony: harmonyPropLog
+        ks: ksPropLog
       }
     ],
     event: [
       {
         test: /^(htouchmove|vtouchmove)$/,
-        ali: aliEventLog
+        ali: aliEventLog,
+        ks: ksEventLog
       }
     ]
   }

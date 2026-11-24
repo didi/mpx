@@ -69,13 +69,15 @@ module.exports = function createHelpers (loaderContext) {
         if (part.useJSONJS) options.useJSONJS = true
       // eslint-disable-next-line no-fallthrough
       case 'styles':
+        options.lang = part.lang
+      // eslint-disable-next-line no-fallthrough
       case 'template':
         options.extract = true
     }
     // 允许外部强制关闭extract
     if (extraOptions.extract === false) delete options.extract
 
-    if (part.mode) options.mode = part.mode
+    if (part.srcMode) options.srcMode = part.srcMode
 
     if (src) {
       return loaderUtils.stringifyRequest(loaderContext, addQuery(src, options, true))

@@ -23,9 +23,9 @@ module.exports = function (content) {
   const hasScoped = false
   const hasComment = false
   const isNative = false
+  const isStatic = true
 
   const mode = mpx.mode
-  const localSrcMode = queryObj.mode
   const customAttributes = options.attributes || mpx.attributes || []
   const packageName = queryObj.packageRoot || mpx.currentPackageRoot || 'main'
   const isDynamic = queryObj.isDynamic
@@ -38,7 +38,7 @@ module.exports = function (content) {
 
   const { getRequestString } = createHelpers(this)
 
-  const attributes = ['image:src', 'audio:src', 'video:src', 'cover-image:src', 'import:src', 'include:src', `${config[mode].wxs.tag}:${config[mode].wxs.src}`].concat(customAttributes)
+  const attributes = ['image:src', 'video:src', 'cover-image:src', 'import:src', 'include:src', `${config[mode].wxs.tag}:${config[mode].wxs.src}`].concat(customAttributes)
 
   const links = attrParse(content, function (tag, attr) {
     const res = attributes.find(function (a) {
@@ -96,17 +96,17 @@ module.exports = function (content) {
           hasScoped,
           hasComment,
           isNative,
-          isStatic: true
+          isStatic
         }
-        requestString = getRequestString('template', { src, mode: localSrcMode }, extraOptions)
+        requestString = getRequestString('template', { src }, extraOptions)
         break
       case config[mode].wxs.tag:
         // 显式传递issuerResource避免模块缓存以及提供给wxs-loader计算相对路径
         extraOptions = {
           issuerResource: this.resource,
-          isStatic: true
+          isStatic
         }
-        requestString = getRequestString('wxs', { src, mode: localSrcMode }, extraOptions)
+        requestString = getRequestString('wxs', { src }, extraOptions)
         break
       default:
         requestString = JSON.stringify(src)

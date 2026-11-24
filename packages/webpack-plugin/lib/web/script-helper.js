@@ -24,19 +24,29 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
     Object.keys(localComponentsMap).forEach((componentName) => {
       const componentCfg = localComponentsMap[componentName]
       const componentRequest = stringifyRequest(loaderContext, componentCfg.resource)
+
       if (componentCfg.async) {
-        // todo 暂时只处理局部注册的组件作为componentPlaceholder，暂不支持全局组件和原生组件，如使用了支持范围外的组件将不进行placeholder渲染及替换
-        if (jsonConfig.componentPlaceholder && jsonConfig.componentPlaceholder[componentName] && localComponentsMap[jsonConfig.componentPlaceholder[componentName]]) {
-          const placeholder = jsonConfig.componentPlaceholder[componentName]
+        const placeholder = jsonConfig.componentPlaceholder && jsonConfig.componentPlaceholder[componentName]
+        if (placeholder) {
           const placeholderCfg = localComponentsMap[placeholder]
-          const placeholderRequest = stringifyRequest(loaderContext, placeholderCfg.resource)
-          if (placeholderCfg.async) {
-            loaderContext.emitWarning(
-              new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} should not be a async component, please check!`)
+          if (placeholderCfg) {
+            if (placeholderCfg.async) {
+              loaderContext.emitWarning(
+                new Error(`[Mpx json error][${loaderContext.resource}]: componentPlaceholder ${placeholder} should not be a async component, please check!`)
+              )
+            }
+            const placeholderRequest = stringifyRequest(loaderContext, placeholderCfg.resource)
+            componentsMap[componentName] = `function(){return {component: import(${getAsyncChunkName(componentCfg.async)}${componentRequest}).then(function(res){return getComponent(res)}), loading: getComponent(require(${placeholderRequest}))}}`
+          } else {
+            loaderContext.emitError(
+              new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} is not built-in component or custom component, please check!`)
             )
+            componentsMap[componentName] = `function(){return import(${getAsyncChunkName(componentCfg.async)}${componentRequest}).then(function(res){return getComponent(res)})}`
           }
-          componentsMap[componentName] = `function(){return {component: import(${getAsyncChunkName(componentCfg.async)}${componentRequest}).then(function(res){return getComponent(res)}), loading: getComponent(require(${placeholderRequest}))}}`
         } else {
+          loaderContext.emitError(
+            new Error(`[json processor][${loaderContext.resource}]: ${componentName} has no componentPlaceholder, please check!`)
+          )
           componentsMap[componentName] = `function(){return import(${getAsyncChunkName(componentCfg.async)}${componentRequest}).then(function(res){return getComponent(res)})}`
         }
       } else {
@@ -75,7 +85,7 @@ function buildPagesMap ({ localPagesMap, loaderContext, tabBar, tabBarMap, tabBa
         }
       } else {
         loaderContext.emitWarning(
-          new Error(`[json processor][${loaderContext.resource}]: TabBar page path ${pagePath} is not exist in local page map, please check!`)
+          new Error(`[Mpx json error][${loaderContext.resource}]: TabBar page path ${pagePath} is not exist in local page map, please check!`)
         )
       }
     })
@@ -132,7 +142,7 @@ function getRequireScript ({ script, ctorType, loaderContext }) {
 
 function buildGlobalParams ({
   moduleId,
-  scriptSrcMode,
+  srcMode,
   loaderContext,
   isProduction,
   jsonConfig,
@@ -142,6 +152,11 @@ function buildGlobalParams ({
   hasApp
 }) {
   let content = ''
+  if (isMain || !hasApp) {
+    content += '  global.__mpxGenericsMap = global.__mpxGenericsMap || {}\n'
+    content += '  global.__mpxOptionsMap = global.__mpxOptionsMap || {}\n'
+    content += `  global.__mpxTransRpxFn = ${webConfig.transRpxFn}\n`
+  }
   if (isMain) {
     content += `
   global.getApp = function () {}
@@ -162,22 +177,14 @@ function buildGlobalParams ({
     })
   }
   global.__networkTimeout = ${JSON.stringify(jsonConfig.networkTimeout)}
-  global.__mpxGenericsMap = {}
-  global.__mpxOptionsMap = {}
   global.__style = ${JSON.stringify(jsonConfig.style || 'v1')}
-  global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}
-  global.__mpxTransRpxFn = ${webConfig.transRpxFn}\n`
+  global.__mpxPageConfig = ${JSON.stringify(jsonConfig.window)}\n`
     if (globalTabBar) {
       content += globalTabBar
     }
   } else {
-    if (!hasApp) {
-      content += '  global.__mpxGenericsMap = global.__mpxGenericsMap || {}\n'
-      content += '  global.__mpxOptionsMap = global.__mpxOptionsMap || {}\n'
-      content += `  global.__mpxTransRpxFn = ${webConfig.transRpxFn}\n`
-    }
     content += `  global.currentModuleId = ${JSON.stringify(moduleId)}\n`
-    content += `  global.currentSrcMode = ${JSON.stringify(scriptSrcMode)}\n`
+    content += `  global.currentSrcMode = ${JSON.stringify(srcMode)}\n`
     content += `  global.currentInject = ${JSON.stringify({ moduleId })}\n`
     if (!isProduction) {
       content += `  global.currentResource = ${JSON.stringify(loaderContext.resourcePath)}\n`

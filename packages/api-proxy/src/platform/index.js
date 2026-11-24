@@ -7,7 +7,7 @@ export * from './api/add-phone-contact'
 // createAnimation
 export * from './api/animation'
 
-// onAppShow, onAppHide, offAppShow, offAppHide, onError, offError
+// onAppShow, onAppHide, offAppShow, offAppHide, onError, offError, onPageNotFound, offPageNotFound
 export * from './api/app'
 
 // createInnerAudioContext
@@ -36,6 +36,9 @@ export * from './api/create-selector-query'
 
 // getNetworkType, onNetworkStatusChange, offNetworkStatusChange
 export * from './api/device/network'
+
+// startWifi, stopWifi, getWifiList, onGetWifiList, offGetWifiList, getConnectedWifi
+export * from './api/device/wifi'
 
 // downloadFile, uploadFile
 export * from './api/file'
@@ -119,3 +122,6 @@ export * from './api/keyboard'
 
 // getSetting, openSetting, enableAlertBeforeUnload, disableAlertBeforeUnload, getMenuButtonBoundingClientRect
 export * from './api/setting'
+
+// createCameraContext
+export * from './api/camera'

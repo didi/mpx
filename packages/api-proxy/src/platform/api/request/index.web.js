@@ -14,7 +14,7 @@ function request (options = { url: '' }) {
     method = 'GET',
     dataType = 'json',
     responseType = 'text',
-    timeout = global.__networkTimeout || 60 * 1000,
+    timeout = (typeof global.__networkTimeout === 'number' ? global.__networkTimeout : global.__networkTimeout?.request) || 60 * 1000,
     header = {},
     success = null,
     fail = null,
@@ -97,7 +97,7 @@ function request (options = { url: '' }) {
       statusCode: res.status,
       header: res.headers
     })
-    defineUnsupportedProps(result, ['cookies', 'profile', 'exception'])
+    defineUnsupportedProps(result, ['cookies', 'profile', 'exception', 'useHttpDNS'])
     successHandle(result, success, complete)
     return result
   }).catch(err => {

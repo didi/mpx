@@ -20,16 +20,18 @@ export default class Dep {
     remove(this.subs, sub)
   }
 
-  depend () {
+  depend (info) {
     if (Dep.target) {
-      Dep.target.addDep(this)
+      const tracked = Dep.target.addDep(this)
+      if (process.env.NODE_ENV !== 'production' && tracked && info) Dep.target.invokeDebuggerHook('onTrack', info)
     }
   }
 
-  notify () {
+  notify (info) {
     // stabilize the subscriber list first
     const subs = this.subs.slice()
     for (let i = 0, l = subs.length; i < l; i++) {
+      if (process.env.NODE_ENV !== 'production' && info) subs[i].invokeDebuggerHook('onTrigger', info)
       subs[i].update()
     }
   }

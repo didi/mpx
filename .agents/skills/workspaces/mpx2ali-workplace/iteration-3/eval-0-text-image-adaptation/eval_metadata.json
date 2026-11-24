@@ -1,0 +1,48 @@
+{
+  "eval_id": 0,
+  "eval_name": "text-image-adaptation",
+  "prompt": "修复 product-card.mpx 在支付宝中的长标题打点、图片留白和同名类污染，保留微信的属性、禁用状态与点击事件。宿主页面及兄弟组件也有 .title/.price，已复现样式互相影响；只交付单个组件，不修改全局配置。根节点 summary-root 供既有组件内查询测量，尚未复现测量异常。工程使用微信源码方言，复用npm latest 发布编译器提供的文本兼容能力。输出完整 product-card.mpx 和 validation.md，记录实际检查与未验证范围。",
+  "assertions": [
+    {
+      "id": "a00",
+      "covers": [
+        "a00",
+        "a03"
+      ],
+      "text": "标题在实际截断节点上具有宽度、溢出和换行约束，正确处理 text 继承。",
+      "verification": "核对实际文本节点与样式；直接约束 text 或使用本地编译器提供的默认兼容规则均可，不重复注入全局 text 补丁。"
+    },
+    {
+      "id": "a01",
+      "covers": [
+        "a01"
+      ],
+      "text": "图片留白由外层承担，保留 240rpx × 80rpx 图片内容及 24rpx 留白。",
+      "verification": "追踪 image 和包装节点的尺寸、padding，不能只删除留白。"
+    },
+    {
+      "id": "a32",
+      "covers": [
+        "a32",
+        "a33"
+      ],
+      "text": "通过单文件 scoped 隔离普通 CSS，避免父页面和兄弟组件的同名类互相污染。",
+      "verification": "核对 style scoped、模板 class 与生成样式作用域；微信 styleIsolation 或原子类不能代替这些自定义样式的隔离。"
+    },
+    {
+      "id": "a34",
+      "covers": [
+        "a34"
+      ],
+      "text": "保留 summary-root 测量入口，不因历史支付宝限制机械增加测量包装节点。",
+      "verification": "检查根节点与查询用途；图片留白所需包装属于 a01，不作为多余测量包装扣分。"
+    }
+  ],
+  "files": [
+    "input/product-card.mpx"
+  ],
+  "outputs": [
+    "product-card.mpx",
+    "validation.md"
+  ]
+}

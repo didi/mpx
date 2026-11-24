@@ -21,7 +21,7 @@ function setTabBarStyle (options = {}) {
   }
 
   if (resolved) {
-    successHandle(resolved, options.success, options.complete)
+    return successHandle(resolved, options.success, options.complete)
   }
   failHandle(rejected, options.fail, options.complete)
 }
@@ -50,7 +50,7 @@ function setTabBarItem (options = {}) {
   }
 
   if (resolved) {
-    successHandle(resolved, options.success, options.complete)
+    return successHandle(resolved, options.success, options.complete)
   }
   failHandle(rejected, options.fail, options.complete)
 }
@@ -66,7 +66,7 @@ function showTabBar (options = {}) {
   }
 
   if (resolved) {
-    successHandle(resolved, options.success, options.complete)
+    return successHandle(resolved, options.success, options.complete)
   }
   failHandle(rejected, options.fail, options.complete)
 }
@@ -82,7 +82,7 @@ function hideTabBar (options = {}) {
   }
 
   if (resolved) {
-    successHandle(resolved, options.success, options.complete)
+    return successHandle(resolved, options.success, options.complete)
   }
   failHandle(rejected, options.fail, options.complete)
 }

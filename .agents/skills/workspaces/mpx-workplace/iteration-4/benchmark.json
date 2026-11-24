@@ -1,0 +1,198 @@
+{
+  "iteration": 4,
+  "runtime": {
+    "runtime": "DeepSeek Harness subagent（desktop profile）",
+    "harness_version": "0.2.1-rc.5",
+    "provider": "deepseek-official",
+    "model": "DeepSeek-V4.1-Flash",
+    "model_build": "1017",
+    "model_alias": "deepseek-flash",
+    "model_note": "DSH UI 显示 DeepSeek-V4.1-Flash / 1017；接口只返回别名 deepseek-flash，无更细的权重版本串",
+    "reasoning_effort": "high",
+    "run_date": "2026-11-03",
+    "isolation": "自包含目录 + 提示词白名单 + 会话日志事后审计；非 OS 级隔离",
+    "comparison_with": "iteration-2 (gpt-6.1-sol / high / priority, codex exec)"
+  },
+  "cases": [
+    {
+      "eval_id": 0,
+      "name": "target-config",
+      "title": "构建目标、条件文件与配置归属",
+      "groups": {
+        "mpx": {
+          "passed": 6,
+          "failed": 0,
+          "pending": 0,
+          "total": 6
+        },
+        "noskill": {
+          "passed": 4,
+          "failed": 2,
+          "pending": 0,
+          "total": 6
+        }
+      }
+    },
+    {
+      "eval_id": 1,
+      "name": "layout-card",
+      "title": "图文布局、间距与样式作用范围",
+      "groups": {
+        "mpx": {
+          "passed": 7,
+          "failed": 0,
+          "pending": 0,
+          "total": 7
+        },
+        "noskill": {
+          "passed": 6,
+          "failed": 1,
+          "pending": 0,
+          "total": 7
+        }
+      }
+    },
+    {
+      "eval_id": 2,
+      "name": "scroll-feed",
+      "title": "刷新、吸顶与节点定位",
+      "groups": {
+        "mpx": {
+          "passed": 7,
+          "failed": 0,
+          "pending": 0,
+          "total": 7
+        },
+        "noskill": {
+          "passed": 5,
+          "failed": 2,
+          "pending": 0,
+          "total": 7
+        }
+      }
+    },
+    {
+      "eval_id": 3,
+      "name": "checkout-dialog",
+      "title": "弹层、键盘与窗口尺寸",
+      "groups": {
+        "mpx": {
+          "passed": 5,
+          "failed": 0,
+          "pending": 0,
+          "total": 5
+        },
+        "noskill": {
+          "passed": 4,
+          "failed": 1,
+          "pending": 0,
+          "total": 5
+        }
+      }
+    },
+    {
+      "eval_id": 4,
+      "name": "account-search",
+      "title": "登录适配、任务句柄与请求取消",
+      "groups": {
+        "mpx": {
+          "passed": 6,
+          "failed": 0,
+          "pending": 0,
+          "total": 6
+        },
+        "noskill": {
+          "passed": 3,
+          "failed": 3,
+          "pending": 0,
+          "total": 6
+        }
+      }
+    },
+    {
+      "eval_id": 5,
+      "name": "reactive-switcher",
+      "title": "响应式动态组件与首次渲染能力",
+      "groups": {
+        "mpx": {
+          "passed": 7,
+          "failed": 0,
+          "pending": 0,
+          "total": 7
+        },
+        "noskill": {
+          "passed": 3,
+          "failed": 4,
+          "pending": 0,
+          "total": 7
+        }
+      }
+    },
+    {
+      "eval_id": 6,
+      "name": "routing-subpackage",
+      "title": "路由参数、部署与异步分包",
+      "groups": {
+        "mpx": {
+          "passed": 5,
+          "failed": 0,
+          "pending": 0,
+          "total": 5
+        },
+        "noskill": {
+          "passed": 1,
+          "failed": 4,
+          "pending": 0,
+          "total": 5
+        }
+      }
+    },
+    {
+      "eval_id": 7,
+      "name": "ssr-shared-state",
+      "title": "共享业务的 Web SSR 请求隔离",
+      "groups": {
+        "mpx": {
+          "passed": 5,
+          "failed": 0,
+          "pending": 0,
+          "total": 5
+        },
+        "noskill": {
+          "passed": 3,
+          "failed": 2,
+          "pending": 0,
+          "total": 5
+        }
+      }
+    }
+  ],
+  "totals": {
+    "mpx": {
+      "passed": 48,
+      "failed": 0,
+      "pending": 0,
+      "total": 48
+    },
+    "noskill": {
+      "passed": 29,
+      "failed": 19,
+      "pending": 0,
+      "total": 48
+    }
+  },
+  "usage": {
+    "mpx": {
+      "runs": 8,
+      "avg_tokens": 5629959,
+      "avg_seconds": 497.7,
+      "total_tokens": 45039672
+    },
+    "noskill": {
+      "runs": 8,
+      "avg_tokens": 2603086,
+      "avg_seconds": 516.6,
+      "total_tokens": 20824691
+    }
+  }
+}

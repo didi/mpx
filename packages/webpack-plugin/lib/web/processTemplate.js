@@ -1,8 +1,11 @@
 const templateCompiler = require('../template-compiler/compiler')
 const genComponentTag = require('../utils/gen-component-tag')
 const addQuery = require('../utils/add-query')
+const normalize = require('../utils/normalize')
 const parseRequest = require('../utils/parse-request')
 const { matchCondition } = require('../utils/match-condition')
+const { getWxTemplateComponentName, serializeWxTemplateDefinition, buildWebTemplateImportMergeExpr } = require('./template-shared')
+const titleBarPath = normalize.lib('runtime/components/web/mpx-titlebar.vue')
 
 module.exports = function (template, {
   loaderContext,
@@ -13,25 +16,30 @@ module.exports = function (template, {
   moduleId,
   ctorType,
   usingComponentsInfo,
-  componentGenerics
+  originalUsingComponents,
+  componentGenerics,
+  componentPlaceholder
 }, callback) {
   const mpx = loaderContext.getMpx()
   const {
+    projectRoot,
     mode,
     env,
     defs,
     wxsContentMap,
     decodeHTMLText,
     externalClasses,
-    checkUsingComponents,
     webConfig,
     autoVirtualHostRules,
-    forceProxyEventRules
+    forceProxyEventRules,
+    checkUsingComponentsRules,
+    globalComponents
   } = mpx
   const { resourcePath, rawResourcePath } = parseRequest(loaderContext.resource)
   const builtInComponentsMap = {}
 
   let wxsModuleMap, genericsInfo
+  let wxTemplateComponentsInfo
   let output = '/* template */\n'
 
   if (ctorType === 'app') {
@@ -51,10 +59,10 @@ module.exports = function (template, {
   if (template) {
     // 由于远端src template资源引用的相对路径可能发生变化，暂时不支持。
     if (template.src) {
-      return callback(new Error('[mpx loader][' + loaderContext.resource + ']: ' + 'template content must be inline in .mpx files!'))
+      return callback(new Error('[Mpx template error][' + loaderContext.resource + ']: ' + 'template content must be inline in .mpx files!'))
     }
     if (template.lang) {
-      return callback(new Error('[mpx loader][' + loaderContext.resource + ']: ' + 'template lang is not supported in trans web mode temporarily, we will support it in the future!'))
+      return callback(new Error('[Mpx template error][' + loaderContext.resource + ']: ' + 'template lang is not supported in trans web mode temporarily, we will support it in the future!'))
     }
 
     output += genComponentTag(template, (template) => {
@@ -62,27 +70,28 @@ module.exports = function (template, {
         return template.content
       }
       if (template.content) {
-        const templateSrcMode = template.mode || srcMode
-        const warn = (msg) => {
+        const warn = (msg, loc) => {
           loaderContext.emitWarning(
-            new Error('[template compiler][' + loaderContext.resource + ']: ' + msg)
+            new Error('[Mpx template error][' + (loc || loaderContext.resourcePath) + ']: ' + msg)
           )
         }
-        const error = (msg) => {
+        const error = (msg, loc) => {
           loaderContext.emitError(
-            new Error('[template compiler][' + loaderContext.resource + ']: ' + msg)
+            new Error('[Mpx template error][' + (loc || loaderContext.resourcePath) + ']: ' + msg)
           )
         }
+        const hasVirtualHost = matchCondition(resourcePath, autoVirtualHostRules)
         const { root, meta } = templateCompiler.parse(template.content, {
           warn,
           error,
           usingComponentsInfo, // processTemplate中无其他地方使用，直接透传 string 类型
+          originalUsingComponents,
           hasComment,
           isNative,
           ctorType,
           mode,
           env,
-          srcMode: templateSrcMode,
+          srcMode,
           defs,
           decodeHTMLText,
           externalClasses,
@@ -90,13 +99,15 @@ module.exports = function (template, {
           moduleId,
           filePath: rawResourcePath,
           i18n: null,
-          checkUsingComponents,
-          // web模式下全局组件不会被合入usingComponents中，故globalComponents可以传空
-          globalComponents: [],
+          // 与 template-compiler/index 一致：usingComponentsInfo 已合并 globalComponentsInfo，此处白名单避免对仅 app 注册的组件误报「未使用」
+          globalComponents: Object.keys(globalComponents || {}),
+          componentPlaceholder,
           // web模式下实现抽象组件
           componentGenerics,
-          hasVirtualHost: matchCondition(resourcePath, autoVirtualHostRules),
-          forceProxyEvent: matchCondition(resourcePath, forceProxyEventRules)
+          hasVirtualHost,
+          forceProxyEvent: matchCondition(resourcePath, forceProxyEventRules),
+          checkUsingComponents: matchCondition(resourcePath, checkUsingComponentsRules),
+          customBuiltInComponents: webConfig && webConfig.customBuiltInComponents
         })
         if (meta.wxsModuleMap) {
           wxsModuleMap = meta.wxsModuleMap
@@ -106,16 +117,60 @@ module.exports = function (template, {
             wxsContentMap[`${rawResourcePath}~${module}`] = meta.wxsContentMap[module]
           }
         }
-        if (meta.builtInComponentsMap) {
-          Object.keys(meta.builtInComponentsMap).forEach((name) => {
-            builtInComponentsMap[name] = {
-              resource: addQuery(meta.builtInComponentsMap[name], { isComponent: true })
-            }
-          })
-        }
+        const builtInPaths = meta.builtInComponentsMap || {}
+        Object.keys(builtInPaths).forEach((name) => {
+          builtInComponentsMap[name] = {
+            resource: addQuery(builtInPaths[name], { isComponent: true })
+          }
+        })
         if (meta.genericsInfo) {
           genericsInfo = meta.genericsInfo
         }
+
+        // virtualHost 下多根节点需要编译期报错（子组件必须单根）
+        if (hasVirtualHost && ctorType === 'component') {
+          const realRootChildren = root.children.filter(c => c.type === 1 && c.tag !== 'temp-node')
+          if (realRootChildren.length > 1) {
+            error('Web: when virtualHost is enabled, the component template must have a single root element; please wrap with one root element.')
+          }
+        }
+
+        // 收集 imports / 本地 templates，供 processScript 生成 wxTemplateComponentsMap
+        const hasImports = !!(meta.imports && meta.imports.length)
+        const hasLocals = !!(meta.templates && Object.keys(meta.templates).length)
+        if (hasImports || hasLocals) {
+          const locals = []
+          if (meta.templates) {
+            Object.keys(meta.templates).forEach((name) => {
+              const tplNode = meta.templates[name]
+              const tpl = serializeWxTemplateDefinition(tplNode, error, name)
+              locals.push({
+                name: getWxTemplateComponentName(name),
+                template: tpl
+              })
+            })
+          }
+          const importMergeExprs = []
+          if (meta.imports) {
+            meta.imports.forEach((importSrc) => {
+              importMergeExprs.push(buildWebTemplateImportMergeExpr(loaderContext, importSrc, projectRoot))
+            })
+          }
+          wxTemplateComponentsInfo = {
+            imports: importMergeExprs,
+            locals
+          }
+        }
+
+        // Page 在 web 模式下插入 titlebar 组件
+        if (ctorType === 'page') {
+          builtInComponentsMap['mpx-titlebar'] = {
+            resource: addQuery(titleBarPath, { isComponent: true })
+          }
+          const serialized = templateCompiler.serialize(root)
+          return `<mpx-titlebar :page-config="$options.__mpxPageConfig">${serialized}</mpx-titlebar>`
+        }
+
         return templateCompiler.serialize(root)
       }
     })
@@ -126,6 +181,7 @@ module.exports = function (template, {
     output,
     builtInComponentsMap,
     genericsInfo,
-    wxsModuleMap
+    wxsModuleMap,
+    wxTemplateComponentsInfo
   })
 }

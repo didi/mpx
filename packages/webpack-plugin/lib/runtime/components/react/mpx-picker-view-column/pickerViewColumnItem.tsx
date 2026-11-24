@@ -1,18 +1,16 @@
-import React, { useEffect } from 'react'
+import React, { useMemo } from 'react'
 import { LayoutChangeEvent } from 'react-native'
-import Reanimated, { Extrapolation, interpolate, useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
+import Reanimated, { Extrapolation, interpolate, useAnimatedStyle } from 'react-native-reanimated'
 import { extendObject } from '../utils'
 import { createFaces } from './pickerViewFaces'
-import { usePickerViewColumnAnimationContext, usePickerViewStyleContext } from '../mpx-picker-view/pickerVIewContext'
+import { usePickerViewColumnAnimationContext } from '../mpx-picker-view/pickerVIewContext'
 
 interface PickerColumnItemProps {
   item: React.ReactElement
   index: number
   itemHeight: number
   itemWidth?: number | '100%'
-  textStyle: Record<string, any>
   visibleCount: number
-  textProps?: any
   onItemLayout?: (e: LayoutChangeEvent) => void
 }
 
@@ -21,27 +19,20 @@ const PickerViewColumnItem: React.FC<PickerColumnItemProps> = ({
   index,
   itemHeight,
   itemWidth = '100%',
-  textStyle,
-  textProps,
   visibleCount,
   onItemLayout
 }) => {
-  const textStyleFromAncestor = usePickerViewStyleContext()
   const offsetYShared = usePickerViewColumnAnimationContext()
-  const facesShared = useSharedValue(createFaces(itemHeight, visibleCount))
-
-  useEffect(() => {
-    facesShared.value = createFaces(itemHeight, visibleCount)
-  }, [itemHeight])
+  const facesShared = useMemo(() => createFaces(itemHeight, visibleCount), [itemHeight, visibleCount])
 
   const animatedStyles = useAnimatedStyle(() => {
-    const inputRange = facesShared.value.map((f) => itemHeight * (index + f.index))
+    const inputRange = facesShared.map((f) => itemHeight * (index + f.index))
     return {
-      opacity: interpolate(offsetYShared.value, inputRange, facesShared.value.map((x) => x.opacity), Extrapolation.CLAMP),
+      opacity: interpolate(offsetYShared.value, inputRange, facesShared.map((x) => x.opacity), Extrapolation.CLAMP),
       transform: [
-        { translateY: interpolate(offsetYShared.value, inputRange, facesShared.value.map((x) => x.offsetY), Extrapolation.EXTEND) },
-        { rotateX: interpolate(offsetYShared.value, inputRange, facesShared.value.map((x) => x.deg), Extrapolation.CLAMP) + 'deg' },
-        { scale: interpolate(offsetYShared.value, inputRange, facesShared.value.map((x) => x.scale), Extrapolation.EXTEND) }
+        { translateY: interpolate(offsetYShared.value, inputRange, facesShared.map((x) => x.offsetY), Extrapolation.EXTEND) },
+        { rotateX: interpolate(offsetYShared.value, inputRange, facesShared.map((x) => x.deg), Extrapolation.CLAMP) + 'deg' },
+        { scale: interpolate(offsetYShared.value, inputRange, facesShared.map((x) => x.scale), Extrapolation.EXTEND) }
       ]
     }
   })
@@ -52,12 +43,9 @@ const PickerViewColumnItem: React.FC<PickerColumnItemProps> = ({
     {
       style: extendObject(
         { height: itemHeight, width: '100%' },
-        textStyleFromAncestor,
-        textStyle,
         item.props.style
       )
     },
-    textProps,
     restProps
   )
   const realItem = React.cloneElement(item, itemProps)

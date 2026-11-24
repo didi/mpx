@@ -9,6 +9,10 @@ module.exports = {
     extensions: ['.mpx', '.js', '.wxml', '.vue', '.ts'],
     modules: ['node_modules']
   },
+  // Keep the @mpxjs loader path so Mpx can identify it when injecting compilers.
+  resolveLoader: {
+    symlinks: false
+  },
   cache: {
     type: 'filesystem',
     buildDependencies: {

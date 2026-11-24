@@ -19,9 +19,7 @@ interface MovableAreaProps {
   height?: number
   'scale-area'?: boolean
   'enable-offset'?: boolean
-  'enable-var'?: boolean
-  'external-var-context'?: Record<string, any>
-  'parent-font-size'?: number
+  'enable-var'?: boolean | 'use'
   'parent-width'?: number
   'parent-height'?: number
 }
@@ -36,8 +34,6 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
     style = {},
     'scale-area': scaleArea = false,
     'enable-var': enableVar,
-    'external-var-context': externalVarContext,
-    'parent-font-size': parentFontSize,
     'parent-width': parentWidth,
     'parent-height': parentHeight
   } = props
@@ -46,11 +42,11 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
     hasSelfPercent,
     normalStyle,
     hasVarDec,
-    varContextRef,
+    varContext,
     hasPositionFixed,
     setWidth,
     setHeight
-  } = useTransformStyle(style, { enableVar, externalVarContext, parentFontSize, parentWidth, parentHeight })
+  } = useTransformStyle(style, { enableVar, parentWidth, parentHeight })
 
   const movableAreaRef = useRef(null)
   const movableViewsValue = useSharedValue<Record<string, MovableViewCallbacks>>({})
@@ -134,10 +130,10 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
     View,
     innerProps,
     wrapChildren(
-      props,
+      props.children,
       {
         hasVarDec,
-        varContext: varContextRef.current
+        varContext
       }
     )
   ))
@@ -151,10 +147,10 @@ const _MovableArea = forwardRef<HandlerRef<View, MovableAreaProps>, MovableAreaP
         View,
         innerProps,
         wrapChildren(
-          props,
+          props.children,
           {
             hasVarDec,
-            varContext: varContextRef.current
+            varContext
           }
         )
       )

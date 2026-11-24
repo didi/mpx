@@ -1,6 +1,6 @@
-# 扩展mpx
+# 扩展mpx {#extend-mpx}
 
-## 开发插件
+## 开发插件 {#develop-plugin}
 
 mpx支持使用mpx.use使用插件来进行扩展。插件本身需要提供一个install方法或本身是一个function，该函数接收一个proxyMPX。插件将采用直接在proxyMPX挂载新api属性或在prototype上挂属性。需要注意的是，一定要在app创建之前进行mpx.use。
 
@@ -28,10 +28,14 @@ export default function install(proxyMPX) {
 }
 ```
 
-## 目前已有插件
+## 目前已有插件 {#existing-plugins}
 
 - 网络请求库fetch: @mpxjs/fetch [详细介绍](#fetch) [源码地址](https://github.com/didi/mpx/tree/master/packages/fetch)
 
 - 小程序API转换及promisify：@mpxjs/api-proxy [详细介绍](#api-proxy) [源码地址](https://github.com/didi/mpx/tree/master/packages/api-proxy)
 
 - mock数据：@mpxjs/mock [详细介绍](#mock) [源码地址](https://github.com/didi/mpx/tree/master/packages/mock)
+
+## 扩展组件 {#extend-components}
+
+Mpx 提供跨端扩展组件能力，详见 [Mpx 扩展组件](./extend-component)。

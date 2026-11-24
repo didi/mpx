@@ -17,8 +17,8 @@ module.exports = {
   //   include: [resolve('src')]
   // },
 
-  // 批量指定文件mode，用法如下，指定平台，提供include/exclude指定文件，即include的文件会默认被认为是该平台的，include/exclude的规则和webpack的rules的相同
-  modeRules: {
+  // 按输出平台批量标记使用该平台源码方言的资源，仅当前mode对应规则生效，include/exclude规则与webpack rules相同
+  srcModeRules: {
     // ali: {
     //   include: [resolve('node_modules/vant-aliapp')]
     // }

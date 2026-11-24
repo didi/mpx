@@ -20,17 +20,15 @@ module.exports = function normalizeComponentRules (cfgs, spec) {
           data = Object.assign({}, data, { el, eventRules })
           const testKey = 'name'
           let rAttrsList = []
-          const options = {
-            mode,
-            testKey,
-            data
-          }
           el.attrsList.forEach((attr) => {
             const meta = {}
-            let rAttr = runRules(spec.directive, attr, {
-              ...options,
-              meta
-            })
+            const options = {
+              mode,
+              testKey,
+              diagnostic: data.diagnostic,
+              data: Object.assign({}, data, { attr })
+            }
+            let rAttr = runRules(spec.directive, attr, Object.assign({}, options, { meta }))
             // 指令未匹配到时说明为props，因为目前所有的指令都需要转换
             if (!meta.processed) {
               rAttr = runRules(spec.preProps, rAttr, options)

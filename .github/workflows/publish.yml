@@ -5,6 +5,7 @@ on:
   push:
     tags:
       - v*
+  workflow_dispatch:
 
 jobs:
 #  发布任务不检查代码风格
@@ -15,12 +16,21 @@ jobs:
 #      - run: npm run lint
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
-    - uses: actions/checkout@v4
-    - run: |
-        npm i
-        echo "//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}" >> $HOME/.npmrc 2> /dev/null
-        npm run build:tsc
-        npm run lerna:publish
-      env:
-        NODE_AUTH_TOKEN: ${{secrets.npm_token}}
+    - uses: actions/checkout@v6
+    - uses: actions/setup-node@v6
+      with:
+        node-version: '24'
+        registry-url: 'https://registry.npmjs.org'
+        package-manager-cache: false
+    - name: Set up npm
+      run: npm install -g npm@11
+    - name: Install dependencies
+      run: npm ci
+    - name: Build
+      run: npm run build:tsc
+    - name: Publish
+      run: npm run lerna:publish

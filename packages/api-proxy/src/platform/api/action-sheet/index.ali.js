@@ -3,7 +3,8 @@ import { noop } from '@mpxjs/utils'
 
 function showActionSheet (options = {}) {
   const opts = changeOpts(options, {
-    itemList: 'items'
+    itemList: 'items',
+    alertText: 'title'
   })
 
   const cacheSuc = opts.success || noop

@@ -11,8 +11,8 @@ const getSystemInfoSync = function () {
     brand: DeviceInfo.getBrand(),
     model: DeviceInfo.getModel(),
     system: `${DeviceInfo.getSystemName()} ${DeviceInfo.getSystemVersion()}`,
-    platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName(),
-    deviceOrientation: screenWidth > screenHeight ? 'portrait' : 'landscape',
+    platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName().toLowerCase(),
+    deviceOrientation: screenWidth > screenHeight ? 'landscape' : 'portrait',
     fontSizeSetting: PixelRatio.getFontScale()
   }
   Object.assign(result, windowInfo)
@@ -46,7 +46,7 @@ const getSystemInfo = function (options = {}) {
   try {
     const systemInfo = getSystemInfoSync()
     Object.assign(systemInfo, {
-      errMsg: 'setStorage:ok'
+      errMsg: 'getSystemInfo:ok'
     })
     successHandle(systemInfo, success, complete)
   } catch (err) {
@@ -62,13 +62,15 @@ const getDeviceInfo = function () {
   if (__mpx_mode__ !== 'ios') {
     const deviceAbi = DeviceInfo.supported64BitAbisSync() || []
     deviceInfo.deviceAbi = deviceAbi[0] || null
+  } else {
+    defineUnsupportedProps(deviceInfo, ['deviceAbi'])
   }
   defineUnsupportedProps(deviceInfo, ['benchmarkLevel', 'abi', 'cpuType'])
   Object.assign(deviceInfo, {
     brand: DeviceInfo.getBrand(),
     model: DeviceInfo.getModel(),
     system: `${DeviceInfo.getSystemName()} ${DeviceInfo.getSystemVersion()}`,
-    platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName(),
+    platform: DeviceInfo.isEmulatorSync() ? 'emulator' : DeviceInfo.getSystemName().toLowerCase(),
     memorySize: DeviceInfo.getTotalMemorySync() / (1024 * 1024)
   })
   return deviceInfo

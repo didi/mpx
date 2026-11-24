@@ -55,9 +55,6 @@ module.exports = {
 
   generateBuildMap: true,
 
-  // 输出web时，vue-loader版本<15时需要将该配置关闭
-  forceDisableBuiltInLoader: true,
-
   subpackageModulesRules: {
     include: [/utils\/common/]
   },

@@ -10,7 +10,10 @@ const COMPONENT_HOOKS = [
   'beforeDestroy',
   'destroyed',
   'errorCaptured',
-  'serverPrefetch'
+  'error',
+  'serverPrefetch',
+  'renderTracked',
+  'renderTriggered'
 ]
 
 const PAGE_HOOKS = [
@@ -20,6 +23,7 @@ const PAGE_HOOKS = [
   'onShow',
   'onHide',
   'onUnload',
+  'onRouteDone',
   'onPullDownRefresh',
   'onReachBottom',
   'onPageScroll',

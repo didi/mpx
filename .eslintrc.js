@@ -16,6 +16,7 @@ module.exports = {
     jd: 'readonly',
     qa: 'readonly',
     dd: 'readonly',
+    ks: 'readonly',
     Component: 'readonly',
     Page: 'readonly',
     App: 'readonly',
@@ -23,6 +24,9 @@ module.exports = {
     __mpx_mode__: 'readonly',
     __mpx_env__: 'readonly',
     __mpx_dynamic_runtime__: 'readonly',
+    __mpx_perf__: 'readonly',
+    __mpx_perf_framework__: 'readonly',
+    __mpx_perf_user__: 'readonly',
     getRegExp: 'readonly',
     getCurrentPages: 'readonly'
   },
@@ -31,7 +35,8 @@ module.exports = {
     camelcase: 0,
     indent: 0,
     'symbol-description': 0,
-    'node/no-callback-literal': 0
+    'node/no-callback-literal': 0,
+    'space-before-function-paren': 0
   },
   env: {
     'jest/globals': true,

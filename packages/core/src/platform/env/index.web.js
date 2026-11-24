@@ -11,6 +11,7 @@ export function init (Mpx) {
     show: [],
     hide: [],
     error: [],
+    pageNotFound: [],
     rejection: []
   }
   Mpx.__vue = Vue

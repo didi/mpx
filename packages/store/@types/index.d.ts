@@ -4,7 +4,7 @@ type UnboxDepField<D, F> = F extends keyof D ? D[F] : {}
 
 type GetReturnOrSelf<T> = T extends (...args: any)=> infer R ? R : T
 
-interface compContext {
+export interface compContext {
   [key: string]: any
 }
 
@@ -95,12 +95,12 @@ export interface Store<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
     [key: string]: () => any
   }
 
-  mapMutations<K extends keyof M>(maps: K[]): Pick<GetMutations<M>, K>
+  mapMutations<Maps extends readonly (keyof M)[]>(maps: [...Maps]): Pick<GetMutations<M>, Maps[number]>
   mapMutations(depPath: string, maps: string[]): {
     [key: string]: (...payloads: any[]) => any
   }
 
-  mapActions<K extends keyof A>(maps: K[]): Pick<GetActions<A>, K>
+  mapActions<Maps extends readonly (keyof A)[]>(maps: [...Maps]): Pick<GetActions<A>, Maps[number]>
   mapActions(depPath: string, maps: string[]): {
     [key: string]: (...payloads: any[]) => any
   }
@@ -158,7 +158,7 @@ type UnionToIntersection<U> = (U extends any
   ? I
   : never;
 
-interface mapStateFunctionType<S, G> {
+export interface mapStateFunctionType<S, G> {
   [key: string]: (state: S, getter: G) => any
 }
 interface DeeperMutationsAndActions {
@@ -242,7 +242,7 @@ interface StoreOptWithThis<S, G, M, A, D extends Deps> {
   modules?: Record<string, StoreOptWithThis<{}, {}, {}, {}, {}>>
 }
 
-interface IStoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
+export interface IStoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
 
   [DEPS_SYMBOL]: D
   [STATE_SYMBOL]: S
@@ -294,7 +294,7 @@ interface IStoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
     [I in keyof T]: (...payloads: any[]) => any
   }
 
-  mapMutations<K extends keyof M>(maps: K[]): Pick<M, K>
+  mapMutations<Maps extends readonly (keyof M)[]>(maps: [...Maps]): Pick<M, Maps[number]>
   mapMutations<T extends string, P extends string>(depPath: P, maps: readonly T[]): {
     [K in T]: CombineStringKey<P, K> extends keyof GetAllDepsType<M, D, 'mutations'> ? GetAllDepsType<M, D, 'mutations'>[CombineStringKey<P, K>] : (...payloads: any[]) => any
   }
@@ -305,7 +305,7 @@ interface IStoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
     [I in keyof T]: (...payloads: any[]) => any
   }
 
-  mapActions<K extends keyof A>(maps: K[]): Pick<A, K>
+  mapActions<Maps extends readonly (keyof A)[]>(maps: [...Maps]): Pick<A, Maps[number]>
   mapActions<T extends string, P extends string>(depPath: P, maps: readonly T[]): {
     [K in T]: CombineStringKey<P, K> extends keyof GetAllDepsType<A, D, 'actions'> ? GetAllDepsType<A, D, 'actions'>[CombineStringKey<P, K>] : (...payloads: any[]) => any
   }
@@ -384,7 +384,7 @@ interface IStoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> {
   mapActionsToInstance<T extends { [key: string]: string }>(obj: T, context: compContext): void
 }
 
-type StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> = IStoreWithThis<S, G, M, A, D> & CompatibleDispatch
+export type StoreWithThis<S = {}, G = {}, M = {}, A = {}, D extends Deps = {}> = IStoreWithThis<S, G, M, A, D> & CompatibleDispatch
 
 interface StoreOpt<S, G, M, A, D extends Deps> {
   state?: S,

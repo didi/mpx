@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
-import { successHandle, failHandle, getCurrentPageId } from '../../../common/js'
+import { successHandle, failHandle } from '../../../common/js'
 import Portal from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-portal/index'
 import { getWindowInfo } from '../system/rnSystem'
 import Animated, {
@@ -9,15 +9,6 @@ import Animated, {
   withTiming,
   Easing
 } from 'react-native-reanimated'
-const actionSheetMap = new Map()
-
-const remove = function (id) {
-  if (actionSheetMap.get(id)) { // 页面维度判断是否要清除之前渲染的actionsheet
-    Portal.remove(actionSheetMap.get(id))
-    actionSheetMap.delete(id)
-  }
-}
-
 const windowInfo = getWindowInfo()
 const bottom = windowInfo.screenHeight - windowInfo.safeArea.bottom
 
@@ -76,7 +67,7 @@ const styles = StyleSheet.create({
   }
 })
 
-function ActionSheet ({ itemColor, height, success, fail, complete, alertText, itemList }) {
+function ActionSheet ({ itemColor, height, success, fail, complete, alertText, itemList, onClose }) {
   const slide = useSharedValue(height)
   const fade = useSharedValue(0)
   const [selectedIndex, setSelectedIndex] = useState(null)
@@ -103,13 +94,8 @@ function ActionSheet ({ itemColor, height, success, fail, complete, alertText, i
     })
   }, [])
 
-  const removeActionSheet = function () {
-    const id = getCurrentPageId()
-    remove(id)
-  }
-
   const selectAction = function (index) {
-    removeActionSheet()
+    onClose()
     const result = {
       errMsg: 'showActionSheet:ok',
       tapIndex: index
@@ -118,7 +104,7 @@ function ActionSheet ({ itemColor, height, success, fail, complete, alertText, i
     setSelectedIndex(null)
   }
   const cancelAction = function () {
-    removeActionSheet()
+    onClose()
     const result = {
       errMsg: 'showActionSheet:fail cancel'
     }
@@ -209,16 +195,7 @@ function ActionSheet ({ itemColor, height, success, fail, complete, alertText, i
   )
 }
 function showActionSheet (options = {}) {
-  const id = getCurrentPageId()
-  remove(id)
   const { alertText, itemList = [], itemColor = '#000000', success, fail, complete } = options
-  if (id === null) {
-    const result = {
-      errMsg: 'showActionSheet:fail cannot be invoked outside the mpx life cycle in React Native environments'
-    }
-    failHandle(result, fail, complete)
-    return
-  }
   const len = itemList.length
   if (len > 6) {
     const result = {
@@ -238,10 +215,9 @@ function showActionSheet (options = {}) {
       complete={complete}
       alertText={alertText}
       itemList={itemList}
-    />,
-    id
+      onClose={() => Portal.remove(actionSheetKey)}
+    />
   )
-  actionSheetMap.set(id, actionSheetKey)
 }
 
 export { showActionSheet }

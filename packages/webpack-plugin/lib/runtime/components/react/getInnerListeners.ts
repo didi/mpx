@@ -1,22 +1,36 @@
 import { useRef, useMemo } from 'react'
 import { collectDataset } from '@mpxjs/utils'
-import { omit, extendObject, useNavigation } from './utils'
+import { extendObject, useNavigation } from './utils'
 import eventConfigMap from './event.config'
 import {
   Props,
   EventConfig,
+  EventConfigRef,
   RawConfig,
   EventType,
   RemoveProps,
   InnerRef,
   LayoutRef,
   ExtendedNativeTouchEvent,
-  GlobalEventState
+  GlobalEventState,
+  TouchHandlerConfig
 } from './types/getInnerListeners'
 
 const globalEventState: GlobalEventState = {
   needPress: true,
   identifier: null
+}
+
+const baseRemovePropsMap: Record<string, boolean> = {
+  children: true,
+  'enable-background': true,
+  'enable-offset': true,
+  'enable-var': true,
+  'external-var-context': true,
+  'parent-font-size': true,
+  'parent-width': true,
+  'parent-height': true,
+  'enable-text-pass-through': true
 }
 
 const getTouchEvent = (
@@ -216,29 +230,45 @@ function handleTouchcancel (e: ExtendedNativeTouchEvent, type: EventType, eventC
   innerRef.current.startTimer[type] && clearTimeout(innerRef.current.startTimer[type] as unknown as number)
 }
 
-function createTouchEventHandler (eventName: string, eventConfig: EventConfig) {
+const touchHandlerMap: Record<string, TouchHandlerConfig> = {
+  onTouchStart: {
+    type: 'bubble',
+    handler: handleTouchstart
+  },
+  onTouchMove: {
+    type: 'bubble',
+    handler: handleTouchmove
+  },
+  onTouchEnd: {
+    type: 'bubble',
+    handler: handleTouchend
+  },
+  onTouchCancel: {
+    type: 'bubble',
+    handler: handleTouchcancel
+  },
+  onTouchStartCapture: {
+    type: 'capture',
+    handler: handleTouchstart
+  },
+  onTouchMoveCapture: {
+    type: 'capture',
+    handler: handleTouchmove
+  },
+  onTouchEndCapture: {
+    type: 'capture',
+    handler: handleTouchend
+  },
+  onTouchCancelCapture: {
+    type: 'capture',
+    handler: handleTouchcancel
+  }
+}
+
+function createTouchEventHandler (eventName: string, eventConfigRef: EventConfigRef) {
+  const eventHandler = touchHandlerMap[eventName]
   return (e: ExtendedNativeTouchEvent) => {
-    const bubbleHandlerMap: Record<string, any> = {
-      onTouchStart: handleTouchstart,
-      onTouchMove: handleTouchmove,
-      onTouchEnd: handleTouchend,
-      onTouchCancel: handleTouchcancel
-    }
-
-    const captureHandlerMap: Record<string, any> = {
-      onTouchStartCapture: handleTouchstart,
-      onTouchMoveCapture: handleTouchmove,
-      onTouchEndCapture: handleTouchend,
-      onTouchCancelCapture: handleTouchcancel
-    }
-
-    if (bubbleHandlerMap[eventName]) {
-      bubbleHandlerMap[eventName](e, 'bubble', eventConfig)
-    }
-
-    if (captureHandlerMap[eventName]) {
-      captureHandlerMap[eventName](e, 'capture', eventConfig)
-    }
+    eventHandler.handler(e, eventHandler.type, eventConfigRef.current)
   }
 }
 
@@ -271,36 +301,44 @@ const useInnerProps = (
     disableTap: false,
     navigation
   }, rawConfig)
+  const eventConfigRef = useRef<EventConfig>(eventConfig)
 
+  const restProps: Props = {}
+  const eventNameMap: Record<string, boolean> = {}
+  const userRemovePropsMap: Record<string, boolean> = {}
   let hashEventKey = ''
-  const rawEventKeys: Array<string> = []
-  const transformedEventSet = new Set<string>()
+
+  userRemoveProps.forEach((key) => {
+    userRemovePropsMap[key] = true
+  })
+
   Object.keys(props).forEach((key) => {
-    if (eventConfigMap[key]) {
-      hashEventKey += eventConfigMap[key].bitFlag
-      rawEventKeys.push(key)
-      eventConfigMap[key].events.forEach((event) => {
-        transformedEventSet.add(event)
+    const eventMeta = eventConfigMap[key]
+
+    if (eventMeta) {
+      hashEventKey += eventMeta.bitFlag
+      eventMeta.events.forEach((event) => {
+        eventNameMap[event] = true
       })
-      const match = /^(bind|catch|capture-bind|capture-catch)(.*)$/.exec(key)!
-      const prefix = match[1]
-      const eventName = match[2]
-      eventConfig[eventName] = eventConfig[eventName] || {
+      eventConfig[eventMeta.eventName] = eventConfig[eventMeta.eventName] || {
         bubble: [],
         capture: [],
         hasCatch: false
       }
-      if (prefix === 'bind' || prefix === 'catch') {
-        eventConfig[eventName].bubble.push(key)
-      } else {
-        eventConfig[eventName].capture.push(key)
-      }
+      eventConfig[eventMeta.eventName][eventMeta.eventType].push(key)
 
-      if (prefix === 'catch' || prefix === 'capture-catch') {
-        eventConfig[eventName].hasCatch = true
+      if (eventMeta.hasCatch) {
+        eventConfig[eventMeta.eventName].hasCatch = true
       }
+      return
+    }
+
+    if (!baseRemovePropsMap[key] && !userRemovePropsMap[key]) {
+      restProps[key] = props[key]
     }
   })
+
+  eventConfigRef.current = eventConfig
 
   const events = useMemo(() => {
     if (!hashEventKey) {
@@ -309,30 +347,17 @@ const useInnerProps = (
 
     const events: Record<string, (e: ExtendedNativeTouchEvent) => void> = {}
 
-    for (const eventName of transformedEventSet) {
-      events[eventName] = createTouchEventHandler(eventName, eventConfig)
-    }
+    Object.keys(eventNameMap).forEach((eventName) => {
+      events[eventName] = createTouchEventHandler(eventName, eventConfigRef)
+    })
 
     return events
   }, [hashEventKey])
 
-  const removeProps = [
-    'children',
-    'enable-background',
-    'enable-offset',
-    'enable-var',
-    'external-var-context',
-    'parent-font-size',
-    'parent-width',
-    'parent-height',
-    ...userRemoveProps,
-    ...rawEventKeys
-  ]
-
   return extendObject(
     {},
     events,
-    omit(props, removeProps)
+    restProps
   )
 }
 export default useInnerProps

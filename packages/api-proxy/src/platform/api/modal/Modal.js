@@ -1,4 +1,4 @@
-import { createDom, getRootElement, successHandle, failHandle } from '../../../common/js'
+import { createDom, getRootElement, successHandle, failHandle, defineUnsupportedProps } from '../../../common/js'
 import '../../../common/stylus/Modal.styl'
 // import { forEach } from '@didi/mpx-fetch/src/util'
 // 汉字为两个字符，字母/数字为一个字符
@@ -77,6 +77,7 @@ export default class Modal {
         cancel: true,
         confirm: false
       }
+      defineUnsupportedProps(result, ['content'])
       successHandle(result, opts.success, opts.complete)
     }
     this.confirmBtn.onclick = () => {
@@ -86,6 +87,7 @@ export default class Modal {
         cancel: false,
         confirm: true
       }
+      defineUnsupportedProps(result, ['content'])
       successHandle(result, opts.success, opts.complete)
     }
 

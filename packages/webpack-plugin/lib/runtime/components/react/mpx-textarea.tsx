@@ -4,6 +4,7 @@
  *     type, password, confirm-hold
  *   Addition:
  *     ✔ confirm-type
+ *     ✘ confirm-hold
  *     ✔ auto-height
  *     ✘ fixed
  *     ✘ show-confirm-bar
