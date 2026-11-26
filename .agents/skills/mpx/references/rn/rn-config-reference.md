@@ -157,7 +157,7 @@ Mpx.config.rnConfig.openTypeHandler = Object.assign({}, Mpx.config.rnConfig.open
 | --- | --- | --- | --- |
 | `loadChunkAsync` | `Function` | — | `(params: { url: string, package: string }) => Promise`，url 为 chunk 资源地址，package 为分包名；宿主负责加载并**执行**异步 chunk，使 webpack 注册对应模块。只有下载文件而未执行，不能完成模块加载。 |
 | `downloadChunkAsync` | `Function` | — | `(packages: string[]) => void`，按分包名数组预下载、不执行，由页面命中的应用 `preloadRule` 触发。 |
-| `onLazyLoadPageError` | `Function` | — | `(error: { subpackage: string, errType: string }) => void`，异步页面加载失败时触发，可用于监控或宿主提示；错误类型取自加载错误（如 `'timeout'` / `'fail'`），返回值不被消费。 |
+| `onLazyLoadPageError` | `Function` | — | `(error: { subpackage: string, errType?: string, errMsg?: string, mpxFileResource?: string }) => void`，异步页面加载失败时触发，可用于监控或宿主提示；`errType` 取自加载错误（如 `'timeout'` / `'fail'`），`errMsg` 为错误信息，`mpxFileResource` 仅非生产环境提供，返回值不被消费。 |
 
 `loadChunkAsync` 必须返回 Promise，且应在首次异步加载前注册。成功时先完成 chunk 执行，再结束 Promise（类型约定为 `Promise<null>`）；失败时按加载协议结束为 `'fail'` / `'timeout'` 等状态，框架交给 webpack 的加载完成回调处理。当前 RN 加载适配器不会自行启动超时计时器，超时与宿主侧重试策略需在实现中明确。
 

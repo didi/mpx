@@ -346,8 +346,10 @@ mpx.onLazyLoadError((error) => {
 // RN 环境特有
 mpx.config.rnConfig.onLazyLoadPageError = (error) => {
   console.error('异步页面加载失败:', {
-    subpackage: error.subpackage, // 分包名
-    errType: error.errType        // 'timeout' | 'fail'
+    subpackage: error.subpackage,           // 分包名
+    errType: error.errType,                 // 'timeout' | 'fail'
+    errMsg: error.errMsg,                   // 错误信息
+    mpxFileResource: error.mpxFileResource  // 非生产环境下的文件路径
   })
 }
 ```
