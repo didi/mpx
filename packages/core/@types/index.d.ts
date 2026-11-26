@@ -493,10 +493,14 @@ export interface RnConfig {
    * 分包页面加载失败时触发
    * @param subpackage 失败分包名
    * @param errType 失败类型
+   * @param errMsg 错误信息
+   * @param mpxFileResource 非生产环境下的文件路径
    */
   onLazyLoadPageError?: (error: {
     subpackage: string
-    errType: 'timeout' | 'fail'
+    errType?: 'timeout' | 'fail'
+    errMsg?: string
+    mpxFileResource?: string
   }) => void
 
   /**

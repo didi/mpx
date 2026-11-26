@@ -1,7 +1,7 @@
 import { useState, ComponentType, useEffect, useCallback, useRef, ReactNode, createElement } from 'react'
 import { View, Image, StyleSheet, Text, TouchableOpacity } from 'react-native'
+import { isValidReactComponent } from '@mpxjs/utils'
 import { AnyFunc } from './types/common'
-import { isValidElementType } from 'react-is'
 
 const asyncChunkMap = new Map()
 
@@ -103,6 +103,7 @@ interface AsyncSuspenseProps {
   type: 'component' | 'page'
   chunkName: string
   moduleId: string
+  mpxFileResource?: string
   innerProps: any,
   getLoading?: () => ComponentType<unknown>
   getFallback?: () => ComponentType<unknown>
@@ -115,6 +116,7 @@ const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
   type,
   chunkName,
   moduleId,
+  mpxFileResource,
   innerProps,
   getLoading,
   getFallback,
@@ -135,8 +137,8 @@ const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
         loadChunkPromise
           .current.then((res: ReactNode) => {
             if (cancelled) return
-            if (!isValidElementType(res)) {
-              throw new Error('Async chunk returned an invalid component type')
+            if (!isValidReactComponent(res)) {
+              throw new Error(`Async chunk returned an invalid component type${mpxFileResource ? ` at [${mpxFileResource}]` : ''}`)
             }
             asyncChunkMap.set(moduleId, res)
             setStatus('loaded')
@@ -149,7 +151,8 @@ const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
                 cb({
                   type: 'subpackage',
                   subpackage: [chunkName],
-                  errMsg: `loadSubpackage: ${e.type}`
+                  errMsg: `loadSubpackage: ${e.type || e.message}`,
+                  mpxFileResource
                 })
               })
             }
@@ -157,7 +160,8 @@ const AsyncSuspense: React.FC<AsyncSuspenseProps> = ({
               mpxGlobal.__mpx.config.rnConfig.onLazyLoadPageError({
                 subpackage: chunkName,
                 errType: e.type,
-                errMsg: e.message
+                errMsg: e.message,
+                mpxFileResource
               })
             }
             loadChunkPromise.current = null

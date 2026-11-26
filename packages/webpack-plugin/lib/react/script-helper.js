@@ -16,23 +16,24 @@ function getAsyncChunkName (chunkName) {
   return ''
 }
 
-function getAsyncSuspense (type, moduleId, componentRequest, componentName, chunkName, getFallback, getLoading) {
+function getAsyncSuspense (type, moduleId, componentRequest, componentName, chunkName, getFallback, getLoading, isProduction) {
   return `getAsyncSuspense({
   type: ${JSON.stringify(type)},
   moduleId: ${JSON.stringify(moduleId)},
   chunkName: ${JSON.stringify(chunkName)},
+  ${!isProduction ? `mpxFileResource: ${componentRequest},` : ''}
   ${getFallback ? `getFallback: ${getFallback},` : ''}
   ${getLoading ? `getLoading: ${getLoading},` : ''}
   getChildren () {
     return import(${getAsyncChunkName(chunkName)}${componentRequest}).then(function (res) {
-      return getComponent(res, {displayName: ${JSON.stringify(componentName)}})
+      return getComponent(res, {displayName: ${JSON.stringify(componentName)}${!isProduction ? `, mpxFileResource: ${componentRequest}` : ''}})
     })
   }
 })`
 }
 
-function getComponent (componentRequest, componentName) {
-  return `getComponent(require(${componentRequest}), {displayName: ${JSON.stringify(componentName)}})`
+function getComponent (componentRequest, componentName, isProduction) {
+  return `getComponent(require(${componentRequest}), {displayName: ${JSON.stringify(componentName)}${!isProduction ? `, mpxFileResource: ${componentRequest}` : ''}})`
 }
 
 function getBuiltInComponent (componentRequest) {
@@ -47,7 +48,7 @@ function getComponentGetter (component) {
   return `function(){ return ${component} }`
 }
 
-function buildPagesMap ({ localPagesMap, loaderContext, jsonConfig, rnConfig }) {
+function buildPagesMap ({ localPagesMap, loaderContext, jsonConfig, rnConfig, isProduction }) {
   let firstPage = ''
   const pagesMap = {}
   const mpx = loaderContext.getMpx()
@@ -56,12 +57,12 @@ function buildPagesMap ({ localPagesMap, loaderContext, jsonConfig, rnConfig }) 
     const pageRequest = stringifyRequest(loaderContext, pageCfg.resource)
     if (pageCfg.async && rnConfig.supportSubpackage) {
       const moduleId = mpx.getModuleId(pageCfg.resource)
-      const getFallback = rnConfig.asyncChunk && rnConfig.asyncChunk.fallback && getComponentGetter(getComponent(stringifyRequest(loaderContext, addQuery(rnConfig.asyncChunk.fallback, { isComponent: true })), 'PageFallback'))
-      const getLoading = rnConfig.asyncChunk && rnConfig.asyncChunk.loading && getComponentGetter(getComponent(stringifyRequest(loaderContext, addQuery(rnConfig.asyncChunk.loading, { isComponent: true })), 'PageLoading'))
-      pagesMap[pagePath] = getAsyncSuspense('page', moduleId, pageRequest, 'MpxPage', pageCfg.async, getFallback, getLoading)
+      const getFallback = rnConfig.asyncChunk && rnConfig.asyncChunk.fallback && getComponentGetter(getComponent(stringifyRequest(loaderContext, addQuery(rnConfig.asyncChunk.fallback, { isComponent: true })), 'PageFallback', isProduction))
+      const getLoading = rnConfig.asyncChunk && rnConfig.asyncChunk.loading && getComponentGetter(getComponent(stringifyRequest(loaderContext, addQuery(rnConfig.asyncChunk.loading, { isComponent: true })), 'PageLoading', isProduction))
+      pagesMap[pagePath] = getAsyncSuspense('page', moduleId, pageRequest, 'MpxPage', pageCfg.async, getFallback, getLoading, isProduction)
     } else {
       // 为了保持小程序中app->page->component的js执行顺序，所有的page和component都改为require引入
-      pagesMap[pagePath] = getComponentGetter(getComponent(pageRequest, 'MpxPage'))
+      pagesMap[pagePath] = getComponentGetter(getComponent(pageRequest, 'MpxPage', isProduction))
     }
     if (pagePath === jsonConfig.entryPagePath) {
       firstPage = pagePath
@@ -76,7 +77,7 @@ function buildPagesMap ({ localPagesMap, loaderContext, jsonConfig, rnConfig }) 
   }
 }
 
-function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderContext, jsonConfig, rnConfig }) {
+function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderContext, jsonConfig, rnConfig, isProduction }) {
   const componentsMap = {}
   const mpx = loaderContext.getMpx()
   if (localComponentsMap) {
@@ -96,7 +97,7 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
               )
             }
             const placeholderRequest = stringifyRequest(loaderContext, placeholderCfg.resource)
-            getFallback = getComponentGetter(getComponent(placeholderRequest, placeholder))
+            getFallback = getComponentGetter(getComponent(placeholderRequest, placeholder, isProduction))
           } else {
             loaderContext.emitError(
               new Error(`[json processor][${loaderContext.resource}]: componentPlaceholder ${placeholder} is not built-in component or custom component, please check!`)
@@ -107,9 +108,9 @@ function buildComponentsMap ({ localComponentsMap, builtInComponentsMap, loaderC
             new Error(`[json processor][${loaderContext.resource}]: ${componentName} has no componentPlaceholder, please check!`)
           )
         }
-        componentsMap[componentName] = getAsyncSuspense('component', moduleId, componentRequest, componentName, componentCfg.async, getFallback)
+        componentsMap[componentName] = getAsyncSuspense('component', moduleId, componentRequest, componentName, componentCfg.async, getFallback, undefined, isProduction)
       } else {
-        componentsMap[componentName] = getComponentGetter(getComponent(componentRequest, componentName))
+        componentsMap[componentName] = getComponentGetter(getComponent(componentRequest, componentName, isProduction))
       }
     })
   }

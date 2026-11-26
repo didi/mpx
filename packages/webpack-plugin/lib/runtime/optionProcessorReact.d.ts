@@ -18,6 +18,7 @@ interface AsyncSuspenseProps {
   type: 'component' | 'page'
   chunkName: string
   moduleId: string
+  mpxFileResource?: string
   getFallback?: () => ComponentType<unknown>
   getLoading?: () => ComponentType<unknown>
   getChildren: () => Promise<AsyncModule>

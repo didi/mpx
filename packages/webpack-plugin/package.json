@@ -63,8 +63,7 @@
     "semver": "^7.5.4",
     "source-list-map": "^2.0.0",
     "source-map": "^0.7.4",
-    "webpack-virtual-modules": "^0.6.0",
-    "react-is": "^18.2.0"
+    "webpack-virtual-modules": "^0.6.0"
   },
   "peerDependencies": {
     "vue": "^2.7.10",

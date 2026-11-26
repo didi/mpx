@@ -28,6 +28,20 @@ function isObject (obj) {
   return obj !== null && typeof obj === 'object'
 }
 
+const REACT_MEMO_TYPE = Symbol.for('react.memo')
+const REACT_FORWARD_REF_TYPE = Symbol.for('react.forward_ref')
+const REACT_LAZY_TYPE = Symbol.for('react.lazy')
+
+function isValidReactComponent (comp) {
+  return isFunction(comp) || (
+    isObject(comp) && (
+      comp.$$typeof === REACT_MEMO_TYPE ||
+      comp.$$typeof === REACT_FORWARD_REF_TYPE ||
+      comp.$$typeof === REACT_LAZY_TYPE
+    )
+  )
+}
+
 function isPromise (val) {
   return (
     (isObject(val) || isFunction(val)) &&
@@ -163,6 +177,7 @@ export {
   isArray,
   isFunction,
   isObject,
+  isValidReactComponent,
   isPromise,
   isEmptyObject,
   isDef,

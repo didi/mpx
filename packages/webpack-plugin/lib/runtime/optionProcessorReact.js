@@ -1,15 +1,14 @@
 import AsyncSuspense from '@mpxjs/webpack-plugin/lib/runtime/components/react/dist/mpx-async-suspense'
 import { memo, forwardRef, createElement } from 'react'
-import { error } from '@mpxjs/utils'
+import { error, isValidReactComponent } from '@mpxjs/utils'
 import { extend } from './utils'
-import { isValidElementType } from 'react-is'
 
 export function getComponent (component, extendOptions) {
   component = component.__esModule ? component.default : component
-  if (!isValidElementType(component)) {
-    // error 文案也得改下？
+  if (!isValidReactComponent(component)) {
     error(
-      `getComponent expecting function/class component ${extendOptions?.displayName ? `[${extendOptions.displayName}] ` : ''}as the first argument, but got undefined.`
+      `getComponent expecting valid React component ${extendOptions?.displayName ? `[${extendOptions.displayName}] ` : ''}as the first argument, but got ${component === null ? 'null' : typeof component}.`,
+      extendOptions?.mpxFileResource
     )
     return null
   }

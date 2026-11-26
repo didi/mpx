@@ -16,6 +16,7 @@ declare module '@mpxjs/utils' {
   }
   export function shallowEqual (a: unknown, b: unknown): boolean
   export function isObject (value): value is Object
+  export function isValidReactComponent (comp: unknown): boolean
   export function error (msg: string, location?: string, e?: any): void
   export function warn (msg: string, location?: string, e?: any): void
   export function collectDataset (props: Record<string, any>, needParse?: boolean): Record<string, any>
