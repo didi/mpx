@@ -7,7 +7,7 @@ import {
   ONRESIZE
 } from '../../core/innerLifecycle'
 import { isFunction, isBrowser } from '@mpxjs/utils'
-import { observable } from 'vue'
+import { reactive } from 'vue'
 
 let systemInfo = {}
 
@@ -65,7 +65,7 @@ export default function pageStatusMixin (mixinType) {
       },
       beforeCreate () {
         // 同一页面定义可创建多个实例，配置需按实例隔离。
-        this.$options.__mpxPageConfig = observable(Object.assign({}, global.__mpxPageConfig, this.$options.__mpxPageConfig))
+        this.$options.__mpxPageConfig = reactive(Object.assign({}, global.__mpxPageConfig, this.$options.__mpxPageConfig))
       },
       activated () {
         this.mpxPageStatus = 'show'
